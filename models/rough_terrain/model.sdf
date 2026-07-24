@@ -32,9 +32,11 @@
             <use_terrain_paging>false</use_terrain_paging>
             <!-- Ogre2 terrain shader requires at least one diffuse/normal layer. -->
             <texture>
-              <diffuse>model://rough_terrain/textures/dirt.png</diffuse>
-              <normal>model://rough_terrain/textures/flat_normal.png</normal>
-              <size>10</size>
+              <!-- 1254 px photorealistic dirt albedo and a derived normal map. -->
+              <diffuse>model://rough_terrain/textures/dirt_realistic.png</diffuse>
+              <normal>model://rough_terrain/textures/dirt_realistic_normal.png</normal>
+              <!-- Repeat the texture every 6 m across the heightmap. -->
+              <size>6</size>
             </texture>
           </heightmap>
         </geometry>

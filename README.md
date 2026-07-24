@@ -170,6 +170,14 @@ sudo sed -i \
   /opt/ros/humble/share/clearpath_platform_description/urdf/j100/j100.urdf.xacro
 ```
 
+## 노면 시각 재질
+
+지형은 `models/rough_terrain/textures/dirt_realistic.png`의 흙 diffuse
+텍스처와 `dirt_realistic_normal.png`의 normal map을 사용합니다. 텍스처
+반복 간격은 `models/rough_terrain/model.sdf`의 `<texture><size>`이며,
+기본값 `6`은 6 m마다 한 번 반복한다는 뜻입니다. 값이 작을수록 질감이
+더 촘촘하게 보입니다.
+
 ## 패키지 구조
 
 ```text
