@@ -97,7 +97,7 @@ def generate_launch_description():
         DeclareLaunchArgument('robot_y', default_value='-3.2', description='Robot spawn y position in metres.'),
         DeclareLaunchArgument(
             'robot_z', default_value='1.8',
-            description='Robot spawn z position in ㅇmetres.',
+            description='Robot spawn z position in metres.',
         ),
         DeclareLaunchArgument('robot_yaw', default_value='0.0', description='Robot spawn yaw in radians.'),
         # Fortress accepts both variable names. Set both so this launch file also
