@@ -6,7 +6,6 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
-    ExecuteProcess,
     IncludeLaunchDescription,
     SetEnvironmentVariable,
     TimerAction,
@@ -71,20 +70,6 @@ def generate_launch_description():
         condition=LaunchConfigurationEquals('robot', 'jackal'),
     )
 
-    initial_camera = ExecuteProcess(
-        cmd=[
-            'ign', 'topic',
-            '-t', '/gui/camera/view_control',
-            '-m', 'ignition.msgs.GUICamera',
-            '-p', (
-                'pose { position { x: -14.0 y: -5.5 z: 7.0 } '
-                'orientation { y: 0.319309 w: 0.947651 } } '
-                'view_controller: "orbit"'
-            ),
-        ],
-        output='log',
-    )
-
     return LaunchDescription([
         DeclareLaunchArgument(
             'robot', default_value='husky',
@@ -96,7 +81,7 @@ def generate_launch_description():
         DeclareLaunchArgument('robot_x', default_value='-7.2', description='Robot spawn x position in metres.'),
         DeclareLaunchArgument('robot_y', default_value='-3.2', description='Robot spawn y position in metres.'),
         DeclareLaunchArgument(
-            'robot_z', default_value='1.8',
+            'robot_z', default_value='2.8',
             description='Robot spawn z position in metres.',
         ),
         DeclareLaunchArgument('robot_yaw', default_value='0.0', description='Robot spawn yaw in radians.'),
@@ -134,10 +119,6 @@ def generate_launch_description():
             output='screen',
             arguments=['/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock'],
         ),
-        # The default GUI camera faces the world origin. Move it to an orbit
-        # view that looks towards the default spawn pose before the robot is
-        # created three seconds later.
-        TimerAction(period=1.5, actions=[initial_camera]),
         TimerAction(
             period=3.0,
             actions=[husky_spawn, jackal_spawn],
