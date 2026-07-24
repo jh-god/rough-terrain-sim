@@ -1,4 +1,4 @@
-"""Generate reproducible 257 x 257 grayscale rough-terrain heightmaps."""
+"""Generate reproducible 1025 x 1025 grayscale rough-terrain heightmaps."""
 
 import argparse
 from pathlib import Path
@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 
 
-IMAGE_SIZE = 257
+IMAGE_SIZE = 1025
 
 
 def _smoothstep(values: np.ndarray) -> np.ndarray:
@@ -65,7 +65,7 @@ def generate_heightmap(
     roughness: float,
     smoothing_sigma: float,
 ) -> np.ndarray:
-    """Return a deterministic 257 x 257 uint8 heightmap.
+    """Return a deterministic 1025 x 1025 uint8 heightmap.
 
     ``roughness`` is in [0, 1]. Higher values add more and smaller terrain
     features. ``smoothing_sigma`` is expressed in metres, not pixels.

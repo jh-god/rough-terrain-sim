@@ -94,9 +94,9 @@ def generate_launch_description():
         # The bundled heightmap is steep around its centre. These defaults
         # place the robot on a low-slope patch before it enters rough terrain.
         DeclareLaunchArgument('robot_x', default_value='-7.2', description='Robot spawn x position in metres.'),
-        DeclareLaunchArgument('robot_y', default_value='-5.5', description='Robot spawn y position in metres.'),
+        DeclareLaunchArgument('robot_y', default_value='-3.2', description='Robot spawn y position in metres.'),
         DeclareLaunchArgument(
-            'robot_z', default_value='1.2',
+            'robot_z', default_value='1.8',
             description='Robot spawn z position in metres.',
         ),
         DeclareLaunchArgument('robot_yaw', default_value='0.0', description='Robot spawn yaw in radians.'),
