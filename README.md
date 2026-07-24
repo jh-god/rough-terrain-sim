@@ -1,7 +1,7 @@
 # rough_terrain_sim
 
 ROS 2 Humble과 Gazebo Fortress용 울퉁불퉁한 노면 시뮬레이션 패키지입니다.
-20 m × 20 m PNG heightmap 지형을 불러오며, Clearpath Husky A200 또는
+50 m × 50 m PNG heightmap 지형을 불러오며, Clearpath Husky A200 또는
 Jackal J100을 선택해 스폰할 수 있습니다.
 
 ## 요구 사항
@@ -102,14 +102,14 @@ teleop을 실행한 터미널에 포커스를 둔 뒤 `i`, `,`, `j`, `l` 키로 
 
 ## Heightmap 생성
 
-NumPy와 Pillow 기반 생성기는 257 × 257, 8-bit grayscale PNG를 만듭니다.
+NumPy와 Pillow 기반 생성기는 1025 × 1025, 8-bit grayscale PNG를 만듭니다.
 같은 파라미터와 `seed`는 동일한 결과를 생성합니다.
 
 ```bash
 ros2 run rough_terrain_sim generate_rough_heightmap \
   --seed 42 \
-  --width-m 20 --height-m 20 \
-  --max-elevation-m 2 \
+  --width-m 50 --height-m 50 \
+  --max-elevation-m 4 \
   --roughness 0.65 \
   --smoothing-sigma 0.30 \
   --output ~/ros2_ws/src/rough_terrain_sim/models/rough_terrain/heightmaps/rough_terrain.png
@@ -124,18 +124,18 @@ source install/setup.bash
 ```
 
 지형 물리 크기와 높이 범위는
-`models/rough_terrain/model.sdf`의 `<size>20 20 2</size>`에서 정합니다.
+`models/rough_terrain/model.sdf`의 `<size>50 50 4</size>`에서 정합니다.
 
 ## 노면 마찰과 wheel slip
 
 지형의 ODE 마찰계수는 `models/rough_terrain/model.sdf`에 있습니다.
 
 ```xml
-<mu>1.0</mu>
-<mu2>1.0</mu2>
+<mu>1.2</mu>
+<mu2>1.2</mu2>
 ```
 
-건조 아스팔트 느낌의 시작점으로는 `1.0 ~ 1.2`가 적당합니다. 이 값은
+현재 값 `1.2`는 건조한 단단한 흙 또는 아스팔트에 가까운 시작점이며,
 Husky와 Jackal에 공통 적용됩니다.
 
 Clearpath 로봇은 별도로 WheelSlip 플러그인을 사용합니다. 이는 노면

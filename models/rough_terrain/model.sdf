@@ -7,8 +7,8 @@
         <geometry>
           <heightmap>
             <uri>model://rough_terrain/heightmaps/rough_terrain.png</uri>
-            <!-- Physical dimensions: 20 m x 20 m, with 2 m total elevation range. -->
-            <size>20 20 2</size>
+            <!-- Physical dimensions: 50 m x 50 m, with 2 m total elevation range. -->
+            <size>50 50 4</size>
             <pos>0 0 0</pos>
             <use_terrain_paging>false</use_terrain_paging>
           </heightmap>
@@ -27,7 +27,7 @@
         <geometry>
           <heightmap>
             <uri>model://rough_terrain/heightmaps/rough_terrain.png</uri>
-            <size>20 20 2</size>
+            <size>50 50 4</size>
             <pos>0 0 0</pos>
             <use_terrain_paging>false</use_terrain_paging>
             <!-- Ogre2 terrain shader requires at least one diffuse/normal layer. -->
