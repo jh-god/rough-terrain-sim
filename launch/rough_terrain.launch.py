@@ -81,7 +81,7 @@ def generate_launch_description():
         DeclareLaunchArgument('robot_x', default_value='-7.2', description='Robot spawn x position in metres.'),
         DeclareLaunchArgument('robot_y', default_value='-3.2', description='Robot spawn y position in metres.'),
         DeclareLaunchArgument(
-            'robot_z', default_value='2.8',
+            'robot_z', default_value='2.2',
             description='Robot spawn z position in metres.',
         ),
         DeclareLaunchArgument('robot_yaw', default_value='0.0', description='Robot spawn yaw in radians.'),
