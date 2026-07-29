@@ -7,7 +7,7 @@ Jackal J100을 선택해 스폰할 수 있습니다.
   <img
     src="sample/sample.png"
     alt="Gazebo Fortress 16-bit heightmap"
-    width="800">
+    width="500">
 </p>
 
 ## 요구 사항
@@ -208,7 +208,8 @@ rough_terrain_sim/
 ├── models/rough_terrain/
 │   ├── model.sdf
 │   ├── heightmaps/
-│   │   ├── rough_terrain.png
+│   │   ├── rough_terrain_8bit.png
+│   │   └── rough_terrain_16bit.png
 │   └── textures/
 ├── config/
 │   ├── husky/robot.yaml
