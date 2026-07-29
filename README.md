@@ -3,6 +3,12 @@
 ROS 2 Humble과 Gazebo Fortress용 울퉁불퉁한 노면 시뮬레이션 패키지입니다.
 50 m × 50 m PNG heightmap 지형을 불러오며, Clearpath Husky A200 또는
 Jackal J100을 선택해 스폰할 수 있습니다.
+<p align="center">
+  <img
+    src="sample/sample.png"
+    alt="Gazebo Fortress 16-bit heightmap"
+    width="800">
+</p>
 
 ## 요구 사항
 
