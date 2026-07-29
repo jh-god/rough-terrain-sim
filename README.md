@@ -9,6 +9,8 @@ Jackal J100을 선택해 스폰할 수 있습니다.
 - Ubuntu 22.04
 - ROS 2 Humble
 - Gazebo Fortress (`ign gazebo` / Gazebo Sim 6)
+- **Recommend** Modified *ignition-common4_4.8.1 package* (https://github.com/jh-god/gz-common.git) \
+  16-bit의 heightmap 이미지를 사용할 수 있습니다.
 - Clearpath simulator
 
 Clearpath 로봇을 사용하려면 다음 패키지가 설치되어 있어야 합니다.
@@ -32,7 +34,7 @@ source install/setup.bash
 
 ## 실행
 
-기본값은 Husky A200입니다.
+기본값은 로봇이 없는 환경입니다.
 
 ```bash
 ros2 launch rough_terrain_sim rough_terrain.launch.py
@@ -88,22 +90,25 @@ Husky:
 
 ```bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard \
-  --ros-args -r cmd_vel:=/a200_0000/platform/cmd_vel_unstamped
+  --ros-args -r cmd_vel:=/platform/cmd_vel_unstamped
 ```
 
 Jackal:
 
 ```bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard \
-  --ros-args -r cmd_vel:=/j100_0000/platform/cmd_vel_unstamped
+  --ros-args -r cmd_vel:=/platform/cmd_vel_unstamped
 ```
 
 teleop을 실행한 터미널에 포커스를 둔 뒤 `i`, `,`, `j`, `l` 키로 조작합니다.
 
-## Heightmap 생성
+## Heightmap Generator
 
-NumPy와 Pillow 기반 생성기는 1025 × 1025, 8-bit grayscale PNG를 만듭니다.
-같은 파라미터와 `seed`는 동일한 결과를 생성합니다.
+NumPy와 Pillow 기반 생성기는 1024 × 1024 grayscale PNG를 만듭니다.
+8-bit와 16-bit 생성기를 각각 제공하며, 같은 파라미터와 `seed`는
+동일한 결과를 생성합니다.
+
+### 8-bit
 
 ```bash
 ros2 run rough_terrain_sim generate_rough_heightmap \
@@ -112,8 +117,24 @@ ros2 run rough_terrain_sim generate_rough_heightmap \
   --max-elevation-m 4 \
   --roughness 0.65 \
   --smoothing-sigma 0.30 \
-  --output ~/ros2_ws/src/rough_terrain_sim/models/rough_terrain/heightmaps/rough_terrain.png
+  --output ~/ros2_ws/src/rough_terrain_sim/models/rough_terrain/heightmaps/rough_terrain_8bit.png
 ```
+
+### 16-bit
+
+```bash
+ros2 run rough_terrain_sim generate_rough_heightmap_16bit \
+  --seed 42 \
+  --width-m 50 --height-m 50 \
+  --max-elevation-m 3.17 \
+  --roughness 0.65 \
+  --smoothing-sigma 0.30 \
+  --output ~/ros2_ws/src/rough_terrain_sim/models/rough_terrain/heightmaps/rough_terrain_16bit.png
+```
+
+생성 결과는 단일 채널 `16-bit grayscale PNG`이며 픽셀값 `0–65535`가
+각각 `0 m`와 `max_elevation_m`에 대응합니다. Gazebo에서 실행할 때는
+16-bit 패치가 적용된 `ignition-common4` 라이브러리를 활성화해야 합니다.
 
 생성 후 빌드하고 Gazebo를 재시작합니다.
 
@@ -124,7 +145,8 @@ source install/setup.bash
 ```
 
 지형 물리 크기와 높이 범위는
-`models/rough_terrain/model.sdf`의 `<size>50 50 4</size>`에서 정합니다.
+`models/rough_terrain/model.sdf`의 `<size>50 50 4</size>`에서 정합니다. \
+이는 불러올 환경에 따라 수정이 필요합니다.
 
 ## 노면 마찰과 wheel slip
 
@@ -170,13 +192,6 @@ sudo sed -i \
   /opt/ros/humble/share/clearpath_platform_description/urdf/j100/j100.urdf.xacro
 ```
 
-## 노면 시각 재질
-
-지형은 `models/rough_terrain/textures/dirt_realistic.png`의 흙 diffuse
-텍스처와 `dirt_realistic_normal.png`의 normal map을 사용합니다. 텍스처
-반복 간격은 `models/rough_terrain/model.sdf`의 `<texture><size>`이며,
-기본값 `6`은 6 m마다 한 번 반복한다는 뜻입니다. 값이 작을수록 질감이
-더 촘촘하게 보입니다.
 
 ## 패키지 구조
 
@@ -186,9 +201,13 @@ rough_terrain_sim/
 ├── worlds/rough_terrain.sdf
 ├── models/rough_terrain/
 │   ├── model.sdf
-│   ├── heightmaps/rough_terrain.png
+│   ├── heightmaps/
+│   │   ├── rough_terrain.png
 │   └── textures/
-├── config/husky/robot.yaml
-├── config/jackal/robot.yaml
-└── rough_terrain_sim/generate_heightmap.py
+├── config/
+│   ├── husky/robot.yaml
+│   └── jackal/robot.yaml
+└── rough_terrain_sim/
+    ├── generate_heightmap.py
+    └── generate_heightmap_16bit.py
 ```
