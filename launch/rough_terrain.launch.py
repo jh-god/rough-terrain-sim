@@ -10,7 +10,7 @@ from launch.actions import (
     SetEnvironmentVariable,
     TimerAction,
 )
-from launch.conditions import LaunchConfigurationEquals
+from launch.conditions import IfCondition, LaunchConfigurationEquals
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
@@ -19,6 +19,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     package_share = get_package_share_directory('rough_terrain_sim')
     world_path = os.path.join(package_share, 'worlds', 'rough_terrain.sdf')
+    rviz_config_path = os.path.join(package_share, 'rviz', 'vis.rviz')
     models_path = os.path.join(package_share, 'models')
     husky_setup_path = os.path.join(package_share, 'config', 'husky')
     jackal_setup_path = os.path.join(package_share, 'config', 'jackal')
@@ -46,6 +47,9 @@ def generate_launch_description():
             'z': LaunchConfiguration('robot_z'),
             'yaw': LaunchConfiguration('robot_yaw'),
             'generate': 'true',
+            # This package starts RViz with its own sim.rviz configuration.
+            # Keep Clearpath's default RViz disabled to avoid two windows.
+            'rviz': 'false',
         }.items(),
         condition=LaunchConfigurationEquals('robot', 'husky'),
     )
@@ -66,6 +70,7 @@ def generate_launch_description():
             'z': LaunchConfiguration('robot_z'),
             'yaw': LaunchConfiguration('robot_yaw'),
             'generate': 'true',
+            'rviz': 'false',
         }.items(),
         condition=LaunchConfigurationEquals('robot', 'jackal'),
     )
@@ -75,6 +80,10 @@ def generate_launch_description():
             'robot', default_value='husky',
             choices=['husky', 'jackal', 'none'],
             description='Robot to spawn: Clearpath Husky A200, Jackal J100, or none.',
+        ),
+        DeclareLaunchArgument(
+            'rviz', default_value='true',
+            description='Start RViz2 with the package simulation configuration.',
         ),
         # The bundled heightmap is steep around its centre. These defaults
         # place the robot on a low-slope patch before it enters rough terrain.
@@ -118,6 +127,15 @@ def generate_launch_description():
             name='clock_bridge',
             output='screen',
             arguments=['/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock'],
+        ),
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            name='rviz2',
+            output='screen',
+            arguments=['-d', rviz_config_path],
+            parameters=[{'use_sim_time': True}],
+            condition=IfCondition(LaunchConfiguration('rviz')),
         ),
         TimerAction(
             period=3.0,
