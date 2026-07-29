@@ -37,6 +37,8 @@ setup(
             'generate_rough_heightmap = rough_terrain_sim.generate_heightmap:main',
             'generate_rough_heightmap_16bit = '
             'rough_terrain_sim.generate_heightmap_16bit:main',
+            'camera_pointcloud_frame_fix = '
+            'rough_terrain_sim.camera_pointcloud_frame_fix:main',
         ],
     },
 )

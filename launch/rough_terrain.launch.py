@@ -129,6 +129,13 @@ def generate_launch_description():
             arguments=['/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock'],
         ),
         Node(
+            package='rough_terrain_sim',
+            executable='camera_pointcloud_frame_fix',
+            name='camera_pointcloud_frame_fix',
+            output='screen',
+            parameters=[{'use_sim_time': True}],
+        ),
+        Node(
             package='rviz2',
             executable='rviz2',
             name='rviz2',
