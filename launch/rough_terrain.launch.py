@@ -22,6 +22,8 @@ def generate_launch_description():
     rviz_config_path = os.path.join(package_share, 'rviz', 'vis.rviz')
     models_path = os.path.join(package_share, 'models')
     husky_setup_path = os.path.join(package_share, 'config', 'husky')
+    ouster_bridge_config = os.path.join(
+        husky_setup_path, 'ouster_128_bridge.yaml')
     jackal_setup_path = os.path.join(package_share, 'config', 'jackal')
     gazebo_args = [
         '-r ',
@@ -127,6 +129,32 @@ def generate_launch_description():
             name='clock_bridge',
             output='screen',
             arguments=['/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock'],
+        ),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='ouster_128_gz_bridge',
+            namespace='sensors',
+            output='screen',
+            parameters=[
+                {
+                    'use_sim_time': True,
+                    'config_file': ouster_bridge_config,
+                },
+            ],
+            condition=LaunchConfigurationEquals('robot', 'husky'),
+        ),
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='ouster_128_static_tf',
+            output='screen',
+            arguments=[
+                '--frame-id', 'lidar3d_0_link',
+                '--child-frame-id', 'robot/base_link/lidar3d_0',
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=LaunchConfigurationEquals('robot', 'husky'),
         ),
         Node(
             package='rough_terrain_sim',

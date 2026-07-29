@@ -6,8 +6,8 @@
       <collision name="terrain_collision">
         <geometry>
           <heightmap>
-            <uri>model://rough_terrain/heightmaps/rough_terrain_16bit.png</uri>
-            <!-- <uri>model://rough_terrain/heightmaps/terrain_heightmap_1024_gray16.png</uri> -->
+            <!-- <uri>model://rough_terrain/heightmaps/rough_terrain_16bit.png</uri> -->
+            <uri>model://rough_terrain/heightmaps/terrain_heightmap_1024_gray16.png</uri>
             <!-- Physical dimensions: 50 m x 50 m, with 2 m total elevation range. -->
             <size>50 50 3.17</size>
             <pos>0 0 0</pos>
@@ -27,8 +27,8 @@
         <cast_shadows>true</cast_shadows>
         <geometry>
           <heightmap>
-            <uri>model://rough_terrain/heightmaps/rough_terrain_16bit.png</uri>
-            <!-- <uri>model://rough_terrain/heightmaps/terrain_heightmap_1024_gray16.png</uri> -->
+            <!-- <uri>model://rough_terrain/heightmaps/rough_terrain_16bit.png</uri> -->
+            <uri>model://rough_terrain/heightmaps/terrain_heightmap_1024_gray16.png</uri>
             <size>50 50 3.17</size>
             <pos>0 0 0</pos>
             <use_terrain_paging>false</use_terrain_paging>
