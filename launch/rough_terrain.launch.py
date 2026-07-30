@@ -6,12 +6,11 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
-    ExecuteProcess,
     IncludeLaunchDescription,
     SetEnvironmentVariable,
     TimerAction,
 )
-from launch.conditions import LaunchConfigurationEquals
+from launch.conditions import IfCondition, LaunchConfigurationEquals
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
@@ -20,8 +19,11 @@ from launch_ros.actions import Node
 def generate_launch_description():
     package_share = get_package_share_directory('rough_terrain_sim')
     world_path = os.path.join(package_share, 'worlds', 'rough_terrain.sdf')
+    rviz_config_path = os.path.join(package_share, 'rviz', 'vis.rviz')
     models_path = os.path.join(package_share, 'models')
     husky_setup_path = os.path.join(package_share, 'config', 'husky')
+    ouster_bridge_config = os.path.join(
+        husky_setup_path, 'ouster_128_bridge.yaml')
     jackal_setup_path = os.path.join(package_share, 'config', 'jackal')
     gazebo_args = [
         '-r ',
@@ -47,6 +49,9 @@ def generate_launch_description():
             'z': LaunchConfiguration('robot_z'),
             'yaw': LaunchConfiguration('robot_yaw'),
             'generate': 'true',
+            # This package starts RViz with its own sim.rviz configuration.
+            # Keep Clearpath's default RViz disabled to avoid two windows.
+            'rviz': 'false',
         }.items(),
         condition=LaunchConfigurationEquals('robot', 'husky'),
     )
@@ -67,22 +72,9 @@ def generate_launch_description():
             'z': LaunchConfiguration('robot_z'),
             'yaw': LaunchConfiguration('robot_yaw'),
             'generate': 'true',
+            'rviz': 'false',
         }.items(),
         condition=LaunchConfigurationEquals('robot', 'jackal'),
-    )
-
-    initial_camera = ExecuteProcess(
-        cmd=[
-            'ign', 'topic',
-            '-t', '/gui/camera/view_control',
-            '-m', 'ignition.msgs.GUICamera',
-            '-p', (
-                'pose { position { x: -14.0 y: -5.5 z: 7.0 } '
-                'orientation { y: 0.319309 w: 0.947651 } } '
-                'view_controller: "orbit"'
-            ),
-        ],
-        output='log',
     )
 
     return LaunchDescription([
@@ -91,12 +83,16 @@ def generate_launch_description():
             choices=['husky', 'jackal', 'none'],
             description='Robot to spawn: Clearpath Husky A200, Jackal J100, or none.',
         ),
+        DeclareLaunchArgument(
+            'rviz', default_value='true',
+            description='Start RViz2 with the package simulation configuration.',
+        ),
         # The bundled heightmap is steep around its centre. These defaults
         # place the robot on a low-slope patch before it enters rough terrain.
         DeclareLaunchArgument('robot_x', default_value='-7.2', description='Robot spawn x position in metres.'),
         DeclareLaunchArgument('robot_y', default_value='-3.2', description='Robot spawn y position in metres.'),
         DeclareLaunchArgument(
-            'robot_z', default_value='1.8',
+            'robot_z', default_value='4.2',
             description='Robot spawn z position in metres.',
         ),
         DeclareLaunchArgument('robot_yaw', default_value='0.0', description='Robot spawn yaw in radians.'),
@@ -134,10 +130,48 @@ def generate_launch_description():
             output='screen',
             arguments=['/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock'],
         ),
-        # The default GUI camera faces the world origin. Move it to an orbit
-        # view that looks towards the default spawn pose before the robot is
-        # created three seconds later.
-        TimerAction(period=1.5, actions=[initial_camera]),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='ouster_128_gz_bridge',
+            namespace='sensors',
+            output='screen',
+            parameters=[
+                {
+                    'use_sim_time': True,
+                    'config_file': ouster_bridge_config,
+                },
+            ],
+            condition=LaunchConfigurationEquals('robot', 'husky'),
+        ),
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='ouster_128_static_tf',
+            output='screen',
+            arguments=[
+                '--frame-id', 'lidar3d_0_link',
+                '--child-frame-id', 'robot/base_link/lidar3d_0',
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=LaunchConfigurationEquals('robot', 'husky'),
+        ),
+        Node(
+            package='rough_terrain_sim',
+            executable='camera_pointcloud_frame_fix',
+            name='camera_pointcloud_frame_fix',
+            output='screen',
+            parameters=[{'use_sim_time': True}],
+        ),
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            name='rviz2',
+            output='screen',
+            arguments=['-d', rviz_config_path],
+            parameters=[{'use_sim_time': True}],
+            condition=IfCondition(LaunchConfiguration('rviz')),
+        ),
         TimerAction(
             period=3.0,
             actions=[husky_spawn, jackal_spawn],

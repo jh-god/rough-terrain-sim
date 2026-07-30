@@ -16,6 +16,8 @@ setup(
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         (os.path.join('share', package_name, 'config', 'husky'), glob('config/husky/*.yaml')),
         (os.path.join('share', package_name, 'config', 'jackal'), glob('config/jackal/*.yaml')),
+        (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
+        (os.path.join('share', package_name, 'urdf'), glob('urdf/*.xacro')),
         (os.path.join('share', package_name, 'worlds'), glob('worlds/*.sdf')),
         (os.path.join('share', package_name, 'models', 'rough_terrain'),
          glob('models/rough_terrain/model.*')),
@@ -34,6 +36,10 @@ setup(
     entry_points={
         'console_scripts': [
             'generate_rough_heightmap = rough_terrain_sim.generate_heightmap:main',
+            'generate_rough_heightmap_16bit = '
+            'rough_terrain_sim.generate_heightmap_16bit:main',
+            'camera_pointcloud_frame_fix = '
+            'rough_terrain_sim.camera_pointcloud_frame_fix:main',
         ],
     },
 )

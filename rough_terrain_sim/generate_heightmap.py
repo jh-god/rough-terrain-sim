@@ -1,4 +1,4 @@
-"""Generate reproducible 1025 x 1025 grayscale rough-terrain heightmaps."""
+"""Generate reproducible 1024 x 1024 grayscale rough-terrain heightmaps."""
 
 import argparse
 from pathlib import Path
@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 
 
-IMAGE_SIZE = 1025
+IMAGE_SIZE = 1024
 
 
 def _smoothstep(values: np.ndarray) -> np.ndarray:
@@ -57,7 +57,7 @@ def _gaussian_blur(data: np.ndarray, sigma_y: float, sigma_x: float) -> np.ndarr
     return blur_axis(blur_axis(data, sigma_x, axis=1), sigma_y, axis=0)
 
 
-def generate_heightmap(
+def generate_normalized_heightmap(
     seed: int,
     width_m: float,
     height_m: float,
@@ -65,7 +65,7 @@ def generate_heightmap(
     roughness: float,
     smoothing_sigma: float,
 ) -> np.ndarray:
-    """Return a deterministic 1025 x 1025 uint8 heightmap.
+    """Return a deterministic normalized 1024 x 1024 heightmap.
 
     ``roughness`` is in [0, 1]. Higher values add more and smaller terrain
     features. ``smoothing_sigma`` is expressed in metres, not pixels.
@@ -103,8 +103,28 @@ def generate_heightmap(
     minimum = float(terrain.min())
     extent = float(terrain.max()) - minimum
     if extent <= np.finfo(np.float64).eps:
-        return np.zeros((IMAGE_SIZE, IMAGE_SIZE), dtype=np.uint8)
-    return np.rint((terrain - minimum) * (255.0 / extent)).astype(np.uint8)
+        return np.zeros((IMAGE_SIZE, IMAGE_SIZE), dtype=np.float64)
+    return (terrain - minimum) / extent
+
+
+def generate_heightmap(
+    seed: int,
+    width_m: float,
+    height_m: float,
+    max_elevation_m: float,
+    roughness: float,
+    smoothing_sigma: float,
+) -> np.ndarray:
+    """Return a deterministic 1024 x 1024 uint8 heightmap."""
+    normalized = generate_normalized_heightmap(
+        seed,
+        width_m,
+        height_m,
+        max_elevation_m,
+        roughness,
+        smoothing_sigma,
+    )
+    return np.rint(normalized * 255.0).astype(np.uint8)
 
 
 def parse_arguments(arguments: Sequence[str] | None = None) -> argparse.Namespace:
