@@ -92,15 +92,6 @@ source /opt/ros/humble/setup.bash
 source ~/ros2_ws/install/setup.bash
 ```
 
-Husky:
-
-```bash
-ros2 run teleop_twist_keyboard teleop_twist_keyboard \
-  --ros-args -r cmd_vel:=/platform/cmd_vel_unstamped
-```
-
-Jackal:
-
 ```bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard \
   --ros-args -r cmd_vel:=/platform/cmd_vel_unstamped
