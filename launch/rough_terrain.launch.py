@@ -12,7 +12,13 @@ from launch.actions import (
 )
 from launch.conditions import IfCondition, LaunchConfigurationEquals
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import (
+    Command,
+    EnvironmentVariable,
+    FindExecutable,
+    LaunchConfiguration,
+    PathJoinSubstitution,
+)
 from launch_ros.actions import Node
 
 
@@ -25,6 +31,16 @@ def generate_launch_description():
     ouster_bridge_config = os.path.join(
         husky_setup_path, 'ouster_128_bridge.yaml')
     jackal_setup_path = os.path.join(package_share, 'config', 'jackal')
+    bunker_description_share = get_package_share_directory(
+        'bunker_description')
+    bunker_xacro_path = os.path.join(
+        bunker_description_share, 'urdf', 'bunker.xacro')
+    bunker_resource_path = os.path.dirname(bunker_description_share)
+    bunker_robot_description = Command([
+        FindExecutable(name='xacro'),
+        ' ',
+        bunker_xacro_path,
+    ])
     gazebo_args = [
         '-r ',
         '-v 3 ',
@@ -77,11 +93,62 @@ def generate_launch_description():
         condition=LaunchConfigurationEquals('robot', 'jackal'),
     )
 
+    bunker_state_publisher = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        namespace='bunker',
+        name='robot_state_publisher',
+        output='screen',
+        parameters=[{
+            'robot_description': bunker_robot_description,
+            'use_sim_time': True,
+        }],
+        condition=LaunchConfigurationEquals('robot', 'bunker'),
+    )
+
+    bunker_spawn = Node(
+        package='ros_gz_sim',
+        executable='create',
+        output='screen',
+        arguments=[
+            '-topic', '/bunker/robot_description',
+            '-name', 'bunker',
+            '-x', LaunchConfiguration('robot_x'),
+            '-y', LaunchConfiguration('robot_y'),
+            '-z', LaunchConfiguration('robot_z'),
+            '-Y', LaunchConfiguration('robot_yaw'),
+        ],
+        condition=LaunchConfigurationEquals('robot', 'bunker'),
+    )
+
+    bunker_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name='bunker_gz_bridge',
+        output='screen',
+        arguments=[
+            '/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist',
+            '/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry',
+            '/tf@tf2_msgs/msg/TFMessage[ignition.msgs.Pose_V',
+            '/joint_states@sensor_msgs/msg/JointState[ignition.msgs.Model',
+        ],
+        remappings=[
+            ('/cmd_vel', '/platform/cmd_vel'),
+            ('/odom', '/platform/odom'),
+            ('/joint_states', '/platform/joint_states'),
+        ],
+        parameters=[{'use_sim_time': True}],
+        condition=LaunchConfigurationEquals('robot', 'bunker'),
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument(
             'robot', default_value='husky',
-            choices=['husky', 'jackal', 'none'],
-            description='Robot to spawn: Clearpath Husky A200, Jackal J100, or none.',
+            choices=['husky', 'jackal', 'bunker', 'none'],
+            description=(
+                'Robot to spawn: Clearpath Husky A200, Jackal J100, '
+                'AgileX BUNKER, or none.'
+            ),
         ),
         DeclareLaunchArgument(
             'rviz', default_value='true',
@@ -90,9 +157,9 @@ def generate_launch_description():
         # The bundled heightmap is steep around its centre. These defaults
         # place the robot on a low-slope patch before it enters rough terrain.
         DeclareLaunchArgument('robot_x', default_value='-7.2', description='Robot spawn x position in metres.'),
-        DeclareLaunchArgument('robot_y', default_value='-3.2', description='Robot spawn y position in metres.'),
+        DeclareLaunchArgument('robot_y', default_value='-5.5', description='Robot spawn y position in metres.'),
         DeclareLaunchArgument(
-            'robot_z', default_value='4.2',
+            'robot_z', default_value='3.2',
             description='Robot spawn z position in metres.',
         ),
         DeclareLaunchArgument('robot_yaw', default_value='0.0', description='Robot spawn yaw in radians.'),
@@ -100,11 +167,21 @@ def generate_launch_description():
         # works when invoked directly outside the ros_gz_sim path discovery flow.
         SetEnvironmentVariable(
             name='IGN_GAZEBO_RESOURCE_PATH',
-            value=[EnvironmentVariable('IGN_GAZEBO_RESOURCE_PATH', default_value=''), ':', models_path],
+            value=[
+                EnvironmentVariable(
+                    'IGN_GAZEBO_RESOURCE_PATH', default_value=''),
+                ':', models_path,
+                ':', bunker_resource_path,
+            ],
         ),
         SetEnvironmentVariable(
             name='GZ_SIM_RESOURCE_PATH',
-            value=[EnvironmentVariable('GZ_SIM_RESOURCE_PATH', default_value=''), ':', models_path],
+            value=[
+                EnvironmentVariable(
+                    'GZ_SIM_RESOURCE_PATH', default_value=''),
+                ':', models_path,
+                ':', bunker_resource_path,
+            ],
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
@@ -163,6 +240,8 @@ def generate_launch_description():
             output='screen',
             parameters=[{'use_sim_time': True}],
         ),
+        bunker_state_publisher,
+        bunker_bridge,
         Node(
             package='rviz2',
             executable='rviz2',
@@ -174,6 +253,6 @@ def generate_launch_description():
         ),
         TimerAction(
             period=3.0,
-            actions=[husky_spawn, jackal_spawn],
+            actions=[husky_spawn, jackal_spawn, bunker_spawn],
         ),
     ])
