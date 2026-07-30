@@ -1,8 +1,10 @@
 # rough_terrain_sim
 
 ROS 2 Humble과 Gazebo Fortress용 울퉁불퉁한 노면 시뮬레이션 패키지입니다.
-50 m × 50 m PNG heightmap 지형을 불러오며, Clearpath Husky A200 또는
-Jackal J100을 선택해 스폰할 수 있습니다.
+50 m × 50 m PNG heightmap 지형을 불러오며, 주요 대상 로봇인 Clearpath
+Husky A200 또는 Jackal J100을 선택해 스폰할 수 있습니다. 외부
+`bunker_description`이 준비되어 있으면 AgileX BUNKER도 선택적으로
+불러올 수 있습니다.
 <p align="center">
   <img
     src="sample/sample.png"
@@ -26,6 +28,13 @@ sudo apt update
 sudo apt install ros-humble-clearpath-simulator
 ```
 
+16-bit 패치 라이브러리를 별도 경로에 설치했다면 Gazebo 실행 전에 활성화합니다.
+아래 경로는 설치 위치에 맞게 변경하세요.
+
+```bash
+export LD_LIBRARY_PATH="$HOME/opt/ignition-common4-16bit/lib:${LD_LIBRARY_PATH}"
+```
+
 ## 빌드
 
 ```bash
@@ -40,13 +49,14 @@ source install/setup.bash
 
 ## 실행
 
-기본값은 로봇이 없는 환경입니다.
+기본값은 Husky와 RViz2를 함께 실행하는 구성입니다.
 
 ```bash
 ros2 launch rough_terrain_sim rough_terrain.launch.py
 ```
 
-로봇 종류는 `robot` 인자로 선택합니다.
+로봇은 `robot` 인자로 선택하고, RViz2가 필요 없으면 `rviz:=false`를
+추가합니다.
 
 ```bash
 # Husky A200
@@ -54,6 +64,10 @@ ros2 launch rough_terrain_sim rough_terrain.launch.py robot:=husky
 
 # Jackal J100
 ros2 launch rough_terrain_sim rough_terrain.launch.py robot:=jackal
+
+# AgileX BUNKER (외부 bunker_description 필요)
+ros2 launch rough_terrain_sim rough_terrain.launch.py \
+  robot:=bunker robot_z:=3.2
 
 # 로봇 없이 지형만 실행
 ros2 launch rough_terrain_sim rough_terrain.launch.py robot:=none
@@ -70,14 +84,14 @@ Gazebo가 열리면 카메라는 기본 스폰 위치 `(-7.2, -5.5)`를 향합�
 | --- | ---: | --- |
 | `robot_x` | `-7.2` | x 위치 [m] |
 | `robot_y` | `-5.5` | y 위치 [m] |
-| `robot_z` | `1.2` | z 위치 [m] |
+| `robot_z` | `3.2` | z 위치 [m] |
 | `robot_yaw` | `0.0` | yaw [rad] |
 
 예시:
 
 ```bash
 ros2 launch rough_terrain_sim rough_terrain.launch.py \
-  robot:=jackal robot_x:=-6.0 robot_y:=-4.0 robot_z:=1.2 robot_yaw:=1.57
+  robot:=jackal robot_x:=-6.0 robot_y:=-4.0 robot_z:=3.2 robot_yaw:=1.57
 ```
 
 새 heightmap을 생성한 경우 해당 위치의 지형 높이에 맞춰 `robot_z`를
@@ -98,6 +112,46 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard \
 ```
 
 teleop을 실행한 터미널에 포커스를 둔 뒤 `i`, `,`, `j`, `l` 키로 조작합니다.
+
+### 선택 사항: AgileX BUNKER
+
+BUNKER는 이 패키지의 주 대상인 Clearpath 로봇을 대체하는 기본 모델이
+아니며, 외부 workspace의 `bunker_description`을 참조합니다. 현재 launch는
+시작할 때 이 패키지의 경로를 확인하므로, BUNKER를 선택하지 않더라도
+`~/test_ws`에 패키지가 빌드되어 있고 환경이 source되어 있어야 합니다.
+
+새 터미널마다 workspace를 다음 순서로 source합니다.
+
+```bash
+source /opt/ros/humble/setup.bash
+source ~/test_ws/install/setup.bash
+source ~/ros2_ws/install/setup.bash
+```
+
+높은 위치에서 떨어지며 전복되지 않도록 BUNKER에는 낮은 spawn 높이를
+지정합니다.
+
+```bash
+ros2 launch rough_terrain_sim rough_terrain.launch.py \
+  robot:=bunker robot_z:=3.2
+```
+
+BUNKER의 속도 명령 토픽은 `/platform/cmd_vel`입니다.
+
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard \
+  --ros-args -r cmd_vel:=/platform/cmd_vel
+```
+
+## 센서와 RViz2
+
+- Husky: Intel RealSense RGB-D 카메라와 Ouster OS1-128
+- Jackal: Velodyne VLP-16
+
+RViz2는 패키지의 `rviz/vis.rviz` 설정으로 자동 실행됩니다. Fortress의
+RGB-D point cloud frame 불일치를 보정하기 위해
+`/sensors/camera_0/points`를 `/sensors/camera_0/points_aligned`로
+재발행하며, RViz에서는 보정된 토픽을 사용합니다.
 
 ## Heightmap Generator
 
@@ -133,7 +187,10 @@ ros2 run rough_terrain_sim generate_rough_heightmap_16bit \
 각각 `0 m`와 `max_elevation_m`에 대응합니다. Gazebo에서 실행할 때는
 16-bit 패치가 적용된 `ignition-common4` 라이브러리를 활성화해야 합니다.
 
-생성 후 빌드하고 Gazebo를 재시작합니다.
+생성된 파일을 사용하려면 `models/rough_terrain/model.sdf`의 collision과
+visual에 있는 두 `<uri>`를 모두 생성 파일명으로 변경하거나, 현재 참조 중인
+`terrain_heightmap_1024_gray16.png`를 생성 결과로 교체합니다. 그다음
+빌드하고 Gazebo를 재시작합니다.
 
 ```bash
 cd ~/ros2_ws
@@ -142,7 +199,7 @@ source install/setup.bash
 ```
 
 지형 물리 크기와 높이 범위는
-`models/rough_terrain/model.sdf`의 `<size>50 50 4</size>`에서 정합니다. \
+`models/rough_terrain/model.sdf`의 `<size>50 50 3.17</size>`에서 정합니다. \
 이는 불러올 환경에 따라 수정이 필요합니다.
 
 ## 노면 마찰과 wheel slip
@@ -196,6 +253,8 @@ sudo sed -i \
 rough_terrain_sim/
 ├── launch/rough_terrain.launch.py
 ├── worlds/rough_terrain.sdf
+├── rviz/vis.rviz
+├── urdf/husky_ouster_os1_128.urdf.xacro
 ├── models/rough_terrain/
 │   ├── model.sdf
 │   ├── heightmaps/
@@ -203,9 +262,12 @@ rough_terrain_sim/
 │   │   └── rough_terrain_16bit.png
 │   └── textures/
 ├── config/
-│   ├── husky/robot.yaml
+│   ├── husky/
+│   │   ├── robot.yaml
+│   │   └── ouster_128_bridge.yaml
 │   └── jackal/robot.yaml
 └── rough_terrain_sim/
     ├── generate_heightmap.py
-    └── generate_heightmap_16bit.py
+    ├── generate_heightmap_16bit.py
+    └── camera_pointcloud_frame_fix.py
 ```
