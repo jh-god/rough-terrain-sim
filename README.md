@@ -18,6 +18,7 @@ Jackal J100을 선택해 스폰할 수 있습니다.
 - **Recommend** Modified *ignition-common4_4.8.1 package* (https://github.com/jh-god/gz-common.git) \
   16-bit의 heightmap 이미지를 사용할 수 있습니다.
 - Clearpath simulator
+- Ouster ROS2 driver (https://github.com/ouster-lidar/ouster-ros.git) 
 
 Clearpath 로봇을 사용하려면 다음 패키지가 설치되어 있어야 합니다.
 
@@ -44,7 +45,7 @@ source install/setup.bash
 
 ## 실행
 
-기본값은 로봇이 없는 환경입니다.
+기본값은 husky가 불러와 환경입니다.
 
 ```bash
 ros2 launch rough_terrain_sim rough_terrain.launch.py
@@ -102,7 +103,15 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard \
 ```
 
 teleop을 실행한 터미널에 포커스를 둔 뒤 `i`, `,`, `j`, `l` 키로 조작합니다.
+## 센서와 RViz2
 
+- Husky: Intel RealSense RGB-D 카메라와 Ouster OS1-128
+- Jackal: Velodyne VLP-16
+
+RViz2는 패키지의 `rviz/vis.rviz` 설정으로 자동 실행됩니다. Fortress의
+RGB-D point cloud frame 불일치를 보정하기 위해
+`/sensors/camera_0/points`를 `/sensors/camera_0/points_aligned`로
+재발행하며, RViz에서는 보정된 토픽을 사용합니다.
 ## Heightmap Generator
 
 NumPy와 Pillow 기반 생성기는 1024 × 1024 grayscale PNG를 만듭니다.
@@ -200,6 +209,8 @@ sudo sed -i \
 rough_terrain_sim/
 ├── launch/rough_terrain.launch.py
 ├── worlds/rough_terrain.sdf
+├── rviz/vis.rviz
+├── urdf/husky_ouster_os1_128.urdf.xacro
 ├── models/rough_terrain/
 │   ├── model.sdf
 │   ├── heightmaps/
@@ -207,9 +218,12 @@ rough_terrain_sim/
 │   │   └── rough_terrain_16bit.png
 │   └── textures/
 ├── config/
-│   ├── husky/robot.yaml
+│   ├── husky/
+│   │   ├── robot.yaml
+│   │   └── ouster_128_bridge.yaml
 │   └── jackal/robot.yaml
 └── rough_terrain_sim/
     ├── generate_heightmap.py
-    └── generate_heightmap_16bit.py
+    ├── generate_heightmap_16bit.py
+    └── camera_pointcloud_frame_fix.py
 ```
