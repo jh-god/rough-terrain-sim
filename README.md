@@ -25,6 +25,10 @@ Clearpath 로봇을 사용하려면 다음 패키지가 설치되어 있어야 �
 sudo apt update
 sudo apt install ros-humble-clearpath-simulator
 ```
+16-bit 패치 라이브러리를 별도 경로에 설치했다면 Gazebo 실행 전에 활성화합니다. 아래 경로는 설치 위치에 맞게 변경하세요.
+```bash
+export LD_LIBRARY_PATH="$HOME/opt/ignition-common4-16bit/lib:${LD_LIBRARY_PATH}"
+```
 
 ## 빌드
 
@@ -91,15 +95,6 @@ Gazebo를 실행한 상태에서 새 터미널을 열고 workspace를 source합�
 source /opt/ros/humble/setup.bash
 source ~/ros2_ws/install/setup.bash
 ```
-
-Husky:
-
-```bash
-ros2 run teleop_twist_keyboard teleop_twist_keyboard \
-  --ros-args -r cmd_vel:=/platform/cmd_vel_unstamped
-```
-
-Jackal:
 
 ```bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard \
