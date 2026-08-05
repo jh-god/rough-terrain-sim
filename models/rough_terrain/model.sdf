@@ -34,8 +34,8 @@
             <use_terrain_paging>false</use_terrain_paging>
             <!-- Ogre2 terrain shader requires at least one diffuse/normal layer. -->
             <texture>
-              <!-- 1254 px photorealistic dirt albedo and a derived normal map. -->
-              <diffuse>model://rough_terrain/textures/dirt_realistic.png</diffuse>
+              <!-- Woodland soil blended with sparse leaf litter and muted moss. -->
+              <diffuse>model://rough_terrain/textures/forest_floor_blend_v3.png</diffuse>
               <normal>model://rough_terrain/textures/dirt_realistic_normal.png</normal>
               <!-- Repeat the texture every 6 m across the heightmap. -->
               <size>6</size>
