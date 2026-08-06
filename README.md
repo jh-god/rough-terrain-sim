@@ -5,7 +5,7 @@ ROS 2 Humble과 Gazebo Fortress용 울퉁불퉁한 노면 시뮬레이션 패키
 Jackal J100을 선택해 스폰할 수 있습니다.
 <p align="center">
   <img
-    src="sample/sample.png"
+    src="sample/add asset Screenshot.png"
     alt="Gazebo Fortress 16-bit heightmap"
     width="500">
 </p>
@@ -15,6 +15,7 @@ Jackal J100을 선택해 스폰할 수 있습니다.
 - Ubuntu 22.04
 - ROS 2 Humble
 - Gazebo Fortress (`ign gazebo` / Gazebo Sim 6)
+- Git LFS (대용량 Gazebo 모델 에셋 다운로드용)
 - **Recommend** Modified *ignition-common4_4.8.1 package* (https://github.com/jh-god/gz-common.git) \
   16-bit의 heightmap 이미지를 사용할 수 있습니다.
 - Clearpath simulator
@@ -31,6 +32,30 @@ sudo apt install ros-humble-clearpath-simulator
 export LD_LIBRARY_PATH="$HOME/opt/ignition-common4-16bit/lib:${LD_LIBRARY_PATH}"
 ```
 
+## 저장소 받기 (Git LFS)
+
+나무와 바위 모델 및 고해상도 텍스처는 Git LFS로 관리합니다.
+
+```bash
+sudo apt update
+sudo apt install git-lfs
+git lfs install
+
+cd ~/gazebo_ws/src
+git clone --branch dev-asset https://github.com/jh-god/rough-terrain-sim.git
+cd rough-terrain-sim
+git lfs pull
+```
+
+이미 저장소를 받은 경우에는 업데이트 후 LFS 파일을 내려받습니다.
+
+```bash
+git pull
+git lfs pull
+```
+
+LFS 파일을 받지 않으면 Gazebo에서 나무와 바위 모델이 표시되지 않을 수 있습니다.
+
 ## 빌드
 
 ```bash
@@ -45,7 +70,7 @@ source install/setup.bash
 
 ## 실행
 
-기본값은 husky가 불러와 환경입니다.
+기본값은 husky가 spawn되는 환경입니다.
 
 ```bash
 ros2 launch rough_terrain_sim rough_terrain.launch.py
