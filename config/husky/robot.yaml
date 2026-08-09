@@ -17,10 +17,21 @@ platform:
       parent: rear_bumper_mount
     - name: top_plate
       type: a200.top_plate
+    - name: sensor_arch
+      type: a200.sensor_arch
+      parent: default_mount
+      model: sensor_arch_300
+      enabled: true
   extras:
     urdf:
       package: rough_terrain_sim
       path: urdf/husky_ouster_os1_128.urdf.xacro
+
+mounts:
+  disk:
+    - parent: sensor_arch_mount
+      xyz: [0.0, 0.0, 0.0]
+      rpy: [0.0, 0.0, 0.0]
 
 sensors:
   camera:
@@ -29,7 +40,7 @@ sensors:
       launch_enabled: true
       parent: top_plate_front_mount
       xyz: [0.0, 0.0, 0.05]
-      rpy: [0.0, 0.0, 0.0]
+      rpy: [0.0, 0.785398, 0.0] 
       ros_parameters:
         camera:
           camera_name: camera_0
@@ -40,15 +51,28 @@ sensors:
           enable_depth: true
           depth_module.profile: 640,480,30
           pointcloud.enable: true
-
+  # camera:
+  #   - model: stereolabs_zed
+  #     urdf_enabled: true
+  #     launch_enabled: true
+  #     parent: top_plate_front_mount
+  #     xyz: [0.0, 0.0, 0.05]
+  #     rpy: [0.0, 0.785398, 0.0]
+  #     ros_parameters:
+  #       stereolabs_zed:
+  #         general.grab_frame_rate: 30
+  #         general.serial_number: 0
+  #         general.camera_model: 'zed2i'
+  #         general.grab_resolution: 'HD720'
+  
   # The active 128-channel Ouster is defined by platform.extras.urdf above.
   # Its Gazebo-to-ROS bridge is started by rough_terrain.launch.py.
   lidar3d:
     # - model: velodyne_lidar
     #   urdf_enabled: true
     #   launch_enabled: true
-    #   parent: default_mount
-    #   xyz: [0.0, 0.0, 0.2]
+    #   parent: disk_0_mount
+    #   xyz: [0.0, 0.0, 0.0]
     #   rpy: [0.0, 0.0, 0.0]
     #   ros_parameters:
     #     velodyne_driver_node:
