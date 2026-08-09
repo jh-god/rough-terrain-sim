@@ -26,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud2
+    SyncSource: ""
 Visualization Manager:
   Class: ""
   Displays:
@@ -66,52 +66,11 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        base_footprint:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
-        camera_0_bottom_screw_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_0_color_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_0_color_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_0_depth_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_0_depth_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_0_infra1_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_0_infra1_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_0_infra2_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_0_infra2_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_0_link:
+        chassis_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -120,89 +79,49 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        front_bumper_base_link:
+        front_0_mount:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        front_bumper_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        front_bumper_mount:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        front_left_wheel:
+        front_fender_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        front_right_wheel:
+        front_left_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        inertial_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        lidar3d_0_laser:
+        front_right_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        lidar3d_0_link:
+        gps_0_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        rear_bumper_base_link:
+        imu_0_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        rear_bumper_link:
+        rear_0_mount:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
-        rear_bumper_mount:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        rear_left_wheel:
+        rear_fender_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        rear_right_wheel:
+        rear_left_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        top_chassis_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        top_plate_default_mount:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        top_plate_front_mount:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        top_plate_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        top_plate_rear_mount:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        top_plate_user_rail_link:
+        rear_right_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -288,75 +207,33 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        base_footprint:
-          Value: true
         base_link:
           Value: true
-        camera_0_bottom_screw_frame:
-          Value: true
-        camera_0_color_frame:
-          Value: true
-        camera_0_color_optical_frame:
-          Value: true
-        camera_0_depth_frame:
-          Value: true
-        camera_0_depth_optical_frame:
-          Value: true
-        camera_0_infra1_frame:
-          Value: true
-        camera_0_infra1_optical_frame:
-          Value: true
-        camera_0_infra2_frame:
-          Value: true
-        camera_0_infra2_optical_frame:
-          Value: true
-        camera_0_link:
+        chassis_link:
           Value: true
         default_mount:
           Value: true
-        front_bumper_base_link:
+        front_0_mount:
           Value: true
-        front_bumper_link:
+        front_fender_link:
           Value: true
-        front_bumper_mount:
+        front_left_wheel_link:
           Value: true
-        front_left_wheel:
+        front_right_wheel_link:
           Value: true
-        front_right_wheel:
+        gps_0_link:
           Value: true
-        inertial_link:
-          Value: true
-        lidar3d_0_laser:
-          Value: true
-        lidar3d_0_link:
+        imu_0_link:
           Value: true
         odom:
           Value: true
-        rear_bumper_base_link:
+        rear_0_mount:
           Value: true
-        rear_bumper_link:
+        rear_fender_link:
           Value: true
-        rear_bumper_mount:
+        rear_left_wheel_link:
           Value: true
-        rear_left_wheel:
-          Value: true
-        rear_right_wheel:
-          Value: true
-        robot/base_link/camera_0:
-          Value: true
-        robot/base_link/lidar3d_0:
-          Value: true
-        top_chassis_link:
-          Value: true
-        top_plate_default_mount:
-          Value: true
-        top_plate_front_mount:
-          Value: true
-        top_plate_link:
-          Value: true
-        top_plate_rear_mount:
-          Value: true
-        top_plate_user_rail_link:
+        rear_right_wheel_link:
           Value: true
       Marker Scale: 1
       Name: TF
@@ -366,56 +243,27 @@ Visualization Manager:
       Tree:
         odom:
           base_link:
-            base_footprint:
-              {}
-            default_mount:
-              lidar3d_0_link:
-                lidar3d_0_laser:
+            chassis_link:
+              default_mount:
+                front_0_mount:
                   {}
-                robot/base_link/lidar3d_0:
+                rear_0_mount:
                   {}
-              top_plate_user_rail_link:
-                top_plate_link:
-                  top_plate_default_mount:
-                    {}
-                  top_plate_front_mount:
-                    camera_0_bottom_screw_frame:
-                      camera_0_link:
-                        camera_0_color_frame:
-                          camera_0_color_optical_frame:
-                            {}
-                        camera_0_depth_frame:
-                          camera_0_depth_optical_frame:
-                            {}
-                        camera_0_infra1_frame:
-                          camera_0_infra1_optical_frame:
-                            {}
-                        camera_0_infra2_frame:
-                          camera_0_infra2_optical_frame:
-                            {}
-                        robot/base_link/camera_0:
-                          {}
-                  top_plate_rear_mount:
-                    {}
-            front_bumper_mount:
-              front_bumper_base_link:
-                front_bumper_link:
-                  {}
-            front_left_wheel:
+              front_left_wheel_link:
+                {}
+              front_right_wheel_link:
+                {}
+              gps_0_link:
+                {}
+              imu_0_link:
+                {}
+              rear_left_wheel_link:
+                {}
+              rear_right_wheel_link:
+                {}
+            front_fender_link:
               {}
-            front_right_wheel:
-              {}
-            inertial_link:
-              {}
-            rear_bumper_mount:
-              rear_bumper_base_link:
-                rear_bumper_link:
-                  {}
-            rear_left_wheel:
-              {}
-            rear_right_wheel:
-              {}
-            top_chassis_link:
+            rear_fender_link:
               {}
       Update Interval: 0
       Value: true
@@ -436,7 +284,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: base_footprint
+    Fixed Frame: base_link
     Frame Rate: 30
   Name: root
   Tools:

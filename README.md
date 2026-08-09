@@ -147,6 +147,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard \
 
 - Husky: Intel RealSense RGB-D 카메라와 Ouster OS1-128
 - Jackal: Velodyne VLP-16
+- BUNKER: Ouster OS1-128
 
 RViz2는 패키지의 `rviz/vis.rviz` 설정으로 자동 실행됩니다. Fortress의
 RGB-D point cloud frame 불일치를 보정하기 위해

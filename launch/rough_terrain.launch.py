@@ -222,6 +222,20 @@ def generate_launch_description():
             condition=LaunchConfigurationEquals('robot', 'husky'),
         ),
         Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='bunker_ouster_128_gz_bridge',
+            namespace='sensors',
+            output='screen',
+            parameters=[
+                {
+                    'use_sim_time': True,
+                    'config_file': ouster_bridge_config,
+                },
+            ],
+            condition=LaunchConfigurationEquals('robot', 'bunker'),
+        ),
+        Node(
             package='tf2_ros',
             executable='static_transform_publisher',
             name='ouster_128_static_tf',
