@@ -34,6 +34,13 @@ mounts:
       rpy: [0.0, 0.0, 0.0]
 
 sensors:
+  imu:
+    - model: microstrain_imu
+      urdf_enabled: true
+      launch_enabled: true
+      parent: top_plate_default_mount
+      xyz: [0.0, 0.0, 0.00]
+      rpy: [0.0, 0.0, 0.0]
   camera:
     - model: intel_realsense
       urdf_enabled: true
@@ -64,7 +71,7 @@ sensors:
   #         general.serial_number: 0
   #         general.camera_model: 'zed2i'
   #         general.grab_resolution: 'HD720'
-  
+
   # The active 128-channel Ouster is defined by platform.extras.urdf above.
   # Its Gazebo-to-ROS bridge is started by rough_terrain.launch.py.
   lidar3d:
