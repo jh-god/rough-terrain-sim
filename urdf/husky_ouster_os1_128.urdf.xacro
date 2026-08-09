@@ -5,8 +5,8 @@
 
   <xacro:ouster_os1
     name="lidar3d_0"
-    parent_link="default_mount"
+    parent_link="disk_0_mount"
     samples_v="128">
-    <origin xyz="0.0 0.0 0.2" rpy="0.0 0.0 0.0"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
   </xacro:ouster_os1>
 </robot>
