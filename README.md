@@ -5,7 +5,7 @@ ROS 2 Humble과 Gazebo Fortress용 울퉁불퉁한 노면 시뮬레이션 패키
 Jackal J100을 선택해 스폰할 수 있습니다.
 <p align="center">
   <img
-    src="sample/sample.png"
+    src="sample/add asset Screenshot.png"
     alt="Gazebo Fortress 16-bit heightmap"
     width="500">
 </p>
@@ -15,9 +15,11 @@ Jackal J100을 선택해 스폰할 수 있습니다.
 - Ubuntu 22.04
 - ROS 2 Humble
 - Gazebo Fortress (`ign gazebo` / Gazebo Sim 6)
+- Git LFS (대용량 Gazebo 모델 에셋 다운로드용)
 - **Recommend** Modified *ignition-common4_4.8.1 package* (https://github.com/jh-god/gz-common.git) \
   16-bit의 heightmap 이미지를 사용할 수 있습니다.
 - Clearpath simulator
+- Ouster ROS2 driver (https://github.com/ouster-lidar/ouster-ros.git) 
 
 Clearpath 로봇을 사용하려면 다음 패키지가 설치되어 있어야 합니다.
 
@@ -25,6 +27,34 @@ Clearpath 로봇을 사용하려면 다음 패키지가 설치되어 있어야 �
 sudo apt update
 sudo apt install ros-humble-clearpath-simulator
 ```
+16-bit 패치 라이브러리를 별도 경로에 설치했다면 Gazebo 실행 전에 활성화합니다. 아래 경로는 설치 위치에 맞게 변경하세요.
+```bash
+export LD_LIBRARY_PATH="$HOME/opt/ignition-common4-16bit/lib:${LD_LIBRARY_PATH}"
+```
+
+## 저장소 받기 (Git LFS)
+
+나무와 바위 모델 및 고해상도 텍스처는 Git LFS로 관리합니다.
+
+```bash
+sudo apt update
+sudo apt install git-lfs
+git lfs install
+
+cd ~/gazebo_ws/src
+git clone --branch dev-asset https://github.com/jh-god/rough-terrain-sim.git
+cd rough-terrain-sim
+git lfs pull
+```
+
+이미 저장소를 받은 경우에는 업데이트 후 LFS 파일을 내려받습니다.
+
+```bash
+git pull
+git lfs pull
+```
+
+LFS 파일을 받지 않으면 Gazebo에서 나무와 바위 모델이 표시되지 않을 수 있습니다.
 
 ## 빌드
 
@@ -40,7 +70,7 @@ source install/setup.bash
 
 ## 실행
 
-기본값은 로봇이 없는 환경입니다.
+기본값은 husky가 spawn되는 환경입니다.
 
 ```bash
 ros2 launch rough_terrain_sim rough_terrain.launch.py
@@ -92,22 +122,21 @@ source /opt/ros/humble/setup.bash
 source ~/ros2_ws/install/setup.bash
 ```
 
-Husky:
-
-```bash
-ros2 run teleop_twist_keyboard teleop_twist_keyboard \
-  --ros-args -r cmd_vel:=/platform/cmd_vel_unstamped
-```
-
-Jackal:
-
 ```bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard \
   --ros-args -r cmd_vel:=/platform/cmd_vel_unstamped
 ```
 
 teleop을 실행한 터미널에 포커스를 둔 뒤 `i`, `,`, `j`, `l` 키로 조작합니다.
+## 센서와 RViz2
 
+- Husky: Intel RealSense RGB-D 카메라와 Ouster OS1-128
+- Jackal: Velodyne VLP-16
+
+RViz2는 패키지의 `rviz/vis.rviz` 설정으로 자동 실행됩니다. Fortress의
+RGB-D point cloud frame 불일치를 보정하기 위해
+`/sensors/camera_0/points`를 `/sensors/camera_0/points_aligned`로
+재발행하며, RViz에서는 보정된 토픽을 사용합니다.
 ## Heightmap Generator
 
 NumPy와 Pillow 기반 생성기는 1024 × 1024 grayscale PNG를 만듭니다.
@@ -205,6 +234,8 @@ sudo sed -i \
 rough_terrain_sim/
 ├── launch/rough_terrain.launch.py
 ├── worlds/rough_terrain.sdf
+├── rviz/vis.rviz
+├── urdf/husky_ouster_os1_128.urdf.xacro
 ├── models/rough_terrain/
 │   ├── model.sdf
 │   ├── heightmaps/
@@ -212,9 +243,12 @@ rough_terrain_sim/
 │   │   └── rough_terrain_16bit.png
 │   └── textures/
 ├── config/
-│   ├── husky/robot.yaml
+│   ├── husky/
+│   │   ├── robot.yaml
+│   │   └── ouster_128_bridge.yaml
 │   └── jackal/robot.yaml
 └── rough_terrain_sim/
     ├── generate_heightmap.py
-    └── generate_heightmap_16bit.py
+    ├── generate_heightmap_16bit.py
+    └── camera_pointcloud_frame_fix.py
 ```
