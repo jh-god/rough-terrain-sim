@@ -19,6 +19,7 @@ from launch.substitutions import (
     PathJoinSubstitution,
 )
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -37,7 +38,10 @@ def generate_launch_description():
         '-v 3 ',
         world_path,
     ]
-    fwmax_robot_description = Command(['xacro ', fwmax_xacro_path])
+    fwmax_robot_description = ParameterValue(
+        Command(['xacro ', fwmax_xacro_path]),
+        value_type=str,
+    )
 
     husky_spawn = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -121,7 +125,7 @@ def generate_launch_description():
         DeclareLaunchArgument('robot_x', default_value='-7.2', description='Robot spawn x position in metres.'),
         DeclareLaunchArgument('robot_y', default_value='-3.2', description='Robot spawn y position in metres.'),
         DeclareLaunchArgument(
-            'robot_z', default_value='4.2',
+            'robot_z', default_value='3.2',
             description='Robot spawn z position in metres.',
         ),
         DeclareLaunchArgument('robot_yaw', default_value='0.0', description='Robot spawn yaw in radians.'),

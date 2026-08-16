@@ -15,24 +15,40 @@
   <xacro:property name="base_height" value="0.388"/>
   <xacro:property name="wheel_center_z" value="${wheel_radius - base_height}"/>
 
+  <!--
+    At zero suspension travel, the nominal ground plane is base_footprint z=0.
+    Keep 1 kg in each carrier and wheel, and place the remaining chassis mass
+    so the complete 195.84 kg robot COM is centred 0.255 m above the ground.
+  -->
+  <xacro:property name="total_mass" value="195.84"/>
+  <xacro:property name="target_com_height" value="0.255"/>
+  <xacro:property name="suspension_mass" value="1.0"/>
+  <xacro:property name="wheel_mass" value="1.0"/>
+  <xacro:property
+    name="base_mass"
+    value="${total_mass - 4.0 * (suspension_mass + wheel_mass)}"/>
+  <xacro:property
+    name="base_com_z"
+    value="${(total_mass * (target_com_height - base_height) - 4.0 * (suspension_mass + wheel_mass) * wheel_center_z) / base_mass}"/>
+
   <!-- Positive joint travel compresses the wheel upward toward the chassis. -->
   <xacro:property name="suspension_lower_limit" value="-0.030"/>
   <xacro:property name="suspension_upper_limit" value="0.040"/>
   <xacro:property name="suspension_stiffness" value="20000.0"/>
   <xacro:property name="suspension_damping" value="925.0"/>
-  <!-- Preload supports the 117 kg sprung chassis at zero joint travel. -->
-  <xacro:property name="suspension_reference" value="-0.0143471"/>
+  <!-- Preload supports the sprung chassis at zero joint travel. -->
+  <xacro:property
+    name="suspension_reference"
+    value="${-(base_mass * 9.81 / 4.0) / suspension_stiffness}"/>
+  <xacro:property
+    name="nominal_wheel_normal_force"
+    value="${total_mass * 9.81 / 4.0}"/>
 
   <!--
-    Total mass is 125 kg: 117 kg for the chassis, plus a 1 kg suspension
-    carrier and a 1 kg wheel at each corner. The chassis inertial offset makes
-    the assembled robot's centre of mass coincide with the base_link origin at
-    the designed loaded equilibrium position (zero joint travel).
+    Total mass is 195.84 kg: 187.84 kg for the chassis, plus a 1 kg suspension
+    carrier and a 1 kg wheel at each corner. At the designed loaded equilibrium
+    position, the assembled COM is at x=0, y=0, z=-0.133 m in base_link.
   -->
-  <xacro:property name="base_mass" value="117.0"/>
-  <xacro:property name="base_com_z" value="0.017982905983"/>
-  <xacro:property name="suspension_mass" value="1.0"/>
-  <xacro:property name="wheel_mass" value="1.0"/>
 
   <material name="fwmax_body_dark_silver">
     <color rgba="0.32 0.34 0.37 1.0"/>
@@ -51,8 +67,11 @@
       <mass value="${base_mass}"/>
       <!-- Box approximation based on the 0.96 x 0.55 x 0.395 m envelope. -->
       <inertia
-        ixx="4.470618750" ixy="0.0" ixz="0.0"
-        iyy="10.506843750" iyz="0.0" izz="11.934975000"/>
+        ixx="${base_mass / 12.0 * (0.55 * 0.55 + 0.395 * 0.395)}"
+        ixy="0.0" ixz="0.0"
+        iyy="${base_mass / 12.0 * (0.96 * 0.96 + 0.395 * 0.395)}"
+        iyz="0.0"
+        izz="${base_mass / 12.0 * (0.96 * 0.96 + 0.55 * 0.55)}"/>
     </inertial>
 
     <visual name="fwmax_dae_visual">
@@ -66,10 +85,16 @@
     </visual>
 
     <!-- Keep the expensive detailed DAE out of the contact calculation. -->
-    <collision name="base_collision">
+    <!-- <collision name="base_collision">
       <origin xyz="0 0 -0.158" rpy="0 0 0"/>
       <geometry>
         <box size="0.76 0.40 0.22"/>
+      </geometry>
+    </collision> -->
+    <collision name="base_collision">
+      <origin xyz="0 0 0.032" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.76 0.40 0.60"/>
       </geometry>
     </collision>
   </link>
@@ -198,25 +223,25 @@
       <wheel link_name="front_left_wheel_link">
         <slip_compliance_lateral>0.2</slip_compliance_lateral>
         <slip_compliance_longitudinal>0.1</slip_compliance_longitudinal>
-        <wheel_normal_force>306.6</wheel_normal_force>
+        <wheel_normal_force>${nominal_wheel_normal_force}</wheel_normal_force>
         <wheel_radius>${wheel_radius}</wheel_radius>
       </wheel>
       <wheel link_name="rear_left_wheel_link">
         <slip_compliance_lateral>0.2</slip_compliance_lateral>
         <slip_compliance_longitudinal>0.1</slip_compliance_longitudinal>
-        <wheel_normal_force>306.6</wheel_normal_force>
+        <wheel_normal_force>${nominal_wheel_normal_force}</wheel_normal_force>
         <wheel_radius>${wheel_radius}</wheel_radius>
       </wheel>
       <wheel link_name="front_right_wheel_link">
         <slip_compliance_lateral>0.2</slip_compliance_lateral>
         <slip_compliance_longitudinal>0.1</slip_compliance_longitudinal>
-        <wheel_normal_force>306.6</wheel_normal_force>
+        <wheel_normal_force>${nominal_wheel_normal_force}</wheel_normal_force>
         <wheel_radius>${wheel_radius}</wheel_radius>
       </wheel>
       <wheel link_name="rear_right_wheel_link">
         <slip_compliance_lateral>0.2</slip_compliance_lateral>
         <slip_compliance_longitudinal>0.1</slip_compliance_longitudinal>
-        <wheel_normal_force>306.6</wheel_normal_force>
+        <wheel_normal_force>${nominal_wheel_normal_force}</wheel_normal_force>
         <wheel_radius>${wheel_radius}</wheel_radius>
       </wheel>
     </plugin>

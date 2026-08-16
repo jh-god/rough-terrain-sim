@@ -106,14 +106,15 @@ FW-max의 실제 구동계는 4륜 독립 구동·독립 조향 swerve 방식이
 근사합니다. 따라서 `/cmd_vel`의 `linear.x`와 `angular.z`만 사용하며
 swerve의 횡이동을 위한 `linear.y`는 지원하지 않습니다.
 
-- 전체 질량: 125 kg
-- 전체 질량중심: suspension 설계 정적 평형 자세에서 `base_link` 원점
+- 전체 질량: 195.84 kg
+- 전체 질량중심: suspension 설계 정적 평형 자세에서 로봇 수평 중심,
+  지상 0.255 m (`base_link` 기준 `z=-0.133 m`)
 - 휠베이스: 0.60 m
 - 윤거: 0.45 m
 - 바퀴 반경: 0.125 m
 - passive suspension: 바퀴별 수직 prismatic spring-damper
 - suspension 이동 범위: 70 mm (`-0.03 ~ +0.04 m`)
-- suspension 강성/감쇠: 바퀴당 15,000 N/m, 800 N·s/m
+- suspension 강성/감쇠: 바퀴당 20,000 N/m, 925 N·s/m
 - 외형: `isrl_robot_description/meshes/isrl_fwmax_pro.dae`
 - 물리 충돌: 단순화한 차체 box와 네 개의 cylinder 바퀴
 
