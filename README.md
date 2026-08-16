@@ -40,7 +40,7 @@ source install/setup.bash
 
 ## 실행
 
-기본값은 로봇이 없는 환경입니다.
+기본값은 Husky A200이 포함된 환경입니다.
 
 ```bash
 ros2 launch rough_terrain_sim rough_terrain.launch.py
@@ -59,7 +59,7 @@ ros2 launch rough_terrain_sim rough_terrain.launch.py robot:=jackal
 ros2 launch rough_terrain_sim rough_terrain.launch.py robot:=none
 ```
 
-Gazebo가 열리면 카메라는 기본 스폰 위치 `(-7.2, -5.5)`를 향합니다.
+Gazebo가 열리면 카메라는 지형의 기본 스폰 구역 부근을 바라봅니다.
 로봇은 Gazebo 시작 약 3초 후 생성됩니다.
 
 ## 스폰 위치와 자세
@@ -69,15 +69,15 @@ Gazebo가 열리면 카메라는 기본 스폰 위치 `(-7.2, -5.5)`를 향합�
 | 인자 | 기본값 | 설명 |
 | --- | ---: | --- |
 | `robot_x` | `-7.2` | x 위치 [m] |
-| `robot_y` | `-5.5` | y 위치 [m] |
-| `robot_z` | `1.2` | z 위치 [m] |
+| `robot_y` | `-3.2` | y 위치 [m] |
+| `robot_z` | `4.2` | z 위치 [m] |
 | `robot_yaw` | `0.0` | yaw [rad] |
 
 예시:
 
 ```bash
 ros2 launch rough_terrain_sim rough_terrain.launch.py \
-  robot:=jackal robot_x:=-6.0 robot_y:=-4.0 robot_z:=1.2 robot_yaw:=1.57
+  robot:=jackal robot_x:=-6.0 robot_y:=-4.0 robot_z:=4.2 robot_yaw:=1.57
 ```
 
 새 heightmap을 생성한 경우 해당 위치의 지형 높이에 맞춰 `robot_z`를
@@ -92,19 +92,12 @@ source /opt/ros/humble/setup.bash
 source ~/ros2_ws/install/setup.bash
 ```
 
-Husky:
 
 ```bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard \
   --ros-args -r cmd_vel:=/platform/cmd_vel_unstamped
 ```
 
-Jackal:
-
-```bash
-ros2 run teleop_twist_keyboard teleop_twist_keyboard \
-  --ros-args -r cmd_vel:=/platform/cmd_vel_unstamped
-```
 
 teleop을 실행한 터미널에 포커스를 둔 뒤 `i`, `,`, `j`, `l` 키로 조작합니다.
 
@@ -138,9 +131,12 @@ ros2 run rough_terrain_sim generate_rough_heightmap_16bit \
   --output ~/ros2_ws/src/rough_terrain_sim/models/rough_terrain/heightmaps/rough_terrain_16bit.png
 ```
 
-생성 결과는 단일 채널 `16-bit grayscale PNG`이며 픽셀값 `0–65535`가
-각각 `0 m`와 `max_elevation_m`에 대응합니다. Gazebo에서 실행할 때는
-16-bit 패치가 적용된 `ignition-common4` 라이브러리를 활성화해야 합니다.
+생성 결과는 단일 채널 `16-bit grayscale PNG`이며 픽셀값 `0–65535`는
+정규화된 높이를 나타냅니다. 실제 Gazebo 지형의 높이 범위는 사용하는
+heightmap과 `models/rough_terrain/model.sdf`의 `<size>` 세 번째 값으로
+결정됩니다. 생성 시 지정한 `max_elevation_m`와 이 값을 동일하게 맞춰야
+의도한 높이로 표현됩니다. 16-bit 이미지를 Gazebo에서 실행할 때는 패치가
+적용된 `ignition-common4` 라이브러리를 활성화해야 합니다.
 
 생성 후 빌드하고 Gazebo를 재시작합니다.
 
@@ -150,9 +146,11 @@ colcon build --packages-select rough_terrain_sim --symlink-install
 source install/setup.bash
 ```
 
-지형 물리 크기와 높이 범위는
-`models/rough_terrain/model.sdf`의 `<size>50 50 4</size>`에서 정합니다. \
-이는 불러올 환경에 따라 수정이 필요합니다.
+지형의 가로·세로 크기와 높이 범위는
+`models/rough_terrain/model.sdf`의 `<size>`에서 정합니다. 현재 설정은
+`<size>50 50 3.17</size>`이며, 세 번째 값 `3.17`은 현재 불러오는
+heightmap의 최대 고도 범위에 맞춘 값입니다. 다른 heightmap으로 교체할
+때는 그 이미지가 표현하려는 높이에 맞춰 이 값을 함께 수정해야 합니다.
 
 ## 노면 마찰과 wheel slip
 
@@ -203,18 +201,44 @@ sudo sed -i \
 
 ```text
 rough_terrain_sim/
-├── launch/rough_terrain.launch.py
-├── worlds/rough_terrain.sdf
+├── README.md
+├── package.xml
+├── setup.py
+├── setup.cfg
+├── launch/
+│   └── rough_terrain.launch.py
+├── worlds/
+│   └── rough_terrain.sdf
 ├── models/rough_terrain/
+│   ├── model.config
 │   ├── model.sdf
 │   ├── heightmaps/
+│   │   ├── terrain_heightmap_1024_gray16.png  # 현재 사용 중
+│   │   ├── rough_terrain.png
 │   │   ├── rough_terrain_8bit.png
 │   │   └── rough_terrain_16bit.png
 │   └── textures/
+│       ├── dirt.png
+│       ├── dirt_realistic.png
+│       ├── dirt_realistic_normal.png
+│       └── flat_normal.png
 ├── config/
-│   ├── husky/robot.yaml
-│   └── jackal/robot.yaml
-└── rough_terrain_sim/
-    ├── generate_heightmap.py
-    └── generate_heightmap_16bit.py
+│   ├── husky/
+│   │   ├── robot.yaml
+│   │   └── ouster_128_bridge.yaml
+│   └── jackal/
+│       └── robot.yaml
+├── urdf/
+│   └── husky_ouster_os1_128.urdf.xacro
+├── rviz/
+│   └── vis.rviz
+├── rough_terrain_sim/
+│   ├── __init__.py
+│   ├── generate_heightmap.py
+│   ├── generate_heightmap_16bit.py
+│   └── camera_pointcloud_frame_fix.py
+├── resource/
+│   └── rough_terrain_sim
+└── sample/
+    └── sample.png
 ```

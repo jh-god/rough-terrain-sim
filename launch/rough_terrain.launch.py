@@ -1,4 +1,4 @@
-"""Launch the 20 m x 20 m rough-terrain world in Gazebo Fortress."""
+"""Launch the 50 m x 50 m rough-terrain world in Gazebo Fortress."""
 
 import os
 
@@ -44,8 +44,9 @@ def generate_launch_description():
             'world': 'rough_terrain_world',
             'x': LaunchConfiguration('robot_x'),
             'y': LaunchConfiguration('robot_y'),
-            # The terrain's maximum height is 2 m; spawn above it and let
-            # physics settle the Husky naturally onto the ground.
+            # Spawn above the terrain and let physics settle the Husky
+            # naturally. The required z value depends on the loaded heightmap
+            # and the height range configured in the terrain model SDF.
             'z': LaunchConfiguration('robot_z'),
             'yaw': LaunchConfiguration('robot_yaw'),
             'generate': 'true',

@@ -130,11 +130,14 @@ def generate_heightmap(
 def parse_arguments(arguments: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--seed', required=True, type=int, help='Random seed for reproducibility.')
-    parser.add_argument('--width-m', type=float, default=20.0, help='Terrain width in metres.')
-    parser.add_argument('--height-m', type=float, default=20.0, help='Terrain height in metres.')
+    parser.add_argument('--width-m', type=float, default=50.0, help='Terrain width in metres.')
+    parser.add_argument('--height-m', type=float, default=50.0, help='Terrain height in metres.')
     parser.add_argument(
         '--max-elevation-m', type=float, default=2.0,
-        help='Maximum terrain elevation represented by white (255).',
+        help=(
+            'Intended terrain elevation represented by white (255); '
+            'keep the terrain model SDF height range in sync.'
+        ),
     )
     parser.add_argument(
         '--roughness', type=float, default=0.55,

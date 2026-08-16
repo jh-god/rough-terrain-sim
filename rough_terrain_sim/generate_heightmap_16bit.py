@@ -51,7 +51,10 @@ def parse_arguments(
     )
     parser.add_argument(
         '--max-elevation-m', type=float, default=3.17,
-        help='Maximum terrain elevation represented by white (65535).',
+        help=(
+            'Intended terrain elevation represented by white (65535); '
+            'keep the terrain model SDF height range in sync.'
+        ),
     )
     parser.add_argument(
         '--roughness', type=float, default=0.55,
