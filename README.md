@@ -107,16 +107,29 @@ FW-max의 실제 구동계는 4륜 독립 구동·독립 조향 swerve 방식이
 swerve의 횡이동을 위한 `linear.y`는 지원하지 않습니다.
 
 - 전체 질량: 125 kg
-- 전체 질량중심: `base_link` 원점
+- 전체 질량중심: suspension 설계 정적 평형 자세에서 `base_link` 원점
 - 휠베이스: 0.60 m
 - 윤거: 0.45 m
 - 바퀴 반경: 0.125 m
+- passive suspension: 바퀴별 수직 prismatic spring-damper
+- suspension 이동 범위: 70 mm (`-0.03 ~ +0.04 m`)
+- suspension 강성/감쇠: 바퀴당 15,000 N/m, 800 N·s/m
 - 외형: `isrl_robot_description/meshes/isrl_fwmax_pro.dae`
 - 물리 충돌: 단순화한 차체 box와 네 개의 cylinder 바퀴
 
 Gazebo의 DiffDrive 시스템이 좌우 각 두 개의 바퀴를 구동하며, WheelSlip
-시스템이 skid 회전에 필요한 횡방향 미끄러짐을 제공합니다. `/odom`,
-`/tf`, `/joint_states`는 ROS 2로 bridge됩니다.
+시스템이 skid 회전에 필요한 횡방향 미끄러짐을 제공합니다. 각 바퀴의
+suspension carrier는 차체와 수직 prismatic joint로 연결되며, preload를
+적용해 평지 정착 시 기존 차고를 유지합니다. `/odom`, `/tf`,
+`/joint_states`는 ROS 2로 bridge됩니다.
+
+`/odom`과 `/tf`의 `odom → base_footprint`는 DiffDrive가 계산한 평면
+odometry이므로, Gazebo에서 발생하는 차체의 높이 변화와 roll/pitch는
+포함하지 않습니다.
+
+원본 DAE에는 차체와 함께 고정된 바퀴 형상이 포함되어 있습니다. 실제로
+상하 이동하고 지면과 접촉하는 검은 cylinder 바퀴와 DAE 바퀴가 큰
+suspension 변위에서 일부 겹쳐 보일 수 있지만 물리 동작에는 영향이 없습니다.
 
 ## 키보드 조작
 

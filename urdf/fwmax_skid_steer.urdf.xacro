@@ -15,13 +15,23 @@
   <xacro:property name="base_height" value="0.388"/>
   <xacro:property name="wheel_center_z" value="${wheel_radius - base_height}"/>
 
+  <!-- Positive joint travel compresses the wheel upward toward the chassis. -->
+  <xacro:property name="suspension_lower_limit" value="-0.030"/>
+  <xacro:property name="suspension_upper_limit" value="0.040"/>
+  <xacro:property name="suspension_stiffness" value="20000.0"/>
+  <xacro:property name="suspension_damping" value="925.0"/>
+  <!-- Preload supports the 117 kg sprung chassis at zero joint travel. -->
+  <xacro:property name="suspension_reference" value="-0.0143471"/>
+
   <!--
-    Total mass is 125 kg: 121 kg for the chassis and 1 kg per wheel.
-    The chassis inertial offset compensates for the four wheel masses so the
-    assembled robot's centre of mass is at the base_link origin.
+    Total mass is 125 kg: 117 kg for the chassis, plus a 1 kg suspension
+    carrier and a 1 kg wheel at each corner. The chassis inertial offset makes
+    the assembled robot's centre of mass coincide with the base_link origin at
+    the designed loaded equilibrium position (zero joint travel).
   -->
-  <xacro:property name="base_mass" value="121.0"/>
-  <xacro:property name="base_com_z" value="0.008694214876"/>
+  <xacro:property name="base_mass" value="117.0"/>
+  <xacro:property name="base_com_z" value="0.017982905983"/>
+  <xacro:property name="suspension_mass" value="1.0"/>
   <xacro:property name="wheel_mass" value="1.0"/>
 
   <material name="fwmax_body_dark_silver">
@@ -41,8 +51,8 @@
       <mass value="${base_mass}"/>
       <!-- Box approximation based on the 0.96 x 0.55 x 0.395 m envelope. -->
       <inertia
-        ixx="4.623460417" ixy="0.0" ixz="0.0"
-        iyy="10.866052083" iyz="0.0" izz="12.343008333"/>
+        ixx="4.470618750" ixy="0.0" ixz="0.0"
+        iyy="10.506843750" iyz="0.0" izz="11.934975000"/>
     </inertial>
 
     <visual name="fwmax_dae_visual">
@@ -71,6 +81,35 @@
   </joint>
 
   <xacro:macro name="fwmax_wheel" params="prefix x y">
+    <link name="${prefix}_suspension_link">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${suspension_mass}"/>
+        <!-- Compact hub / suspension carrier approximation. -->
+        <inertia
+          ixx="0.001" ixy="0.0" ixz="0.0"
+          iyy="0.001" iyz="0.0" izz="0.001"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}_suspension_joint" type="prismatic">
+      <parent link="base_link"/>
+      <child link="${prefix}_suspension_link"/>
+      <origin xyz="${x} ${y} ${wheel_center_z}" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit
+        lower="${suspension_lower_limit}"
+        upper="${suspension_upper_limit}"
+        effort="5000.0" velocity="2.0"/>
+      <dynamics damping="${suspension_damping}" friction="0.0"/>
+    </joint>
+
+    <!-- These Gazebo extensions become SDF joint-axis spring dynamics. -->
+    <gazebo reference="${prefix}_suspension_joint">
+      <springReference>${suspension_reference}</springReference>
+      <springStiffness>${suspension_stiffness}</springStiffness>
+    </gazebo>
+
     <link name="${prefix}_wheel_link">
       <inertial>
         <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -82,8 +121,8 @@
       </inertial>
 
       <!--
-        This primitive is slightly inset into the wheels already present in
-        the full-body DAE, avoiding prominent duplicate wheel visuals.
+        This primitive slightly oversizes the wheels already present in the
+        full-body DAE so the moving black wheel masks the fixed mesh wheel.
       -->
       <visual name="wheel_visual">
         <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
@@ -103,9 +142,9 @@
     </link>
 
     <joint name="${prefix}_wheel_joint" type="continuous">
-      <parent link="base_link"/>
+      <parent link="${prefix}_suspension_link"/>
       <child link="${prefix}_wheel_link"/>
-      <origin xyz="${x} ${y} ${wheel_center_z}" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
       <limit effort="800.0" velocity="20.0"/>
       <dynamics damping="0.2" friction="0.0"/>
