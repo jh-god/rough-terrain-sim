@@ -12,7 +12,12 @@ from launch.actions import (
 )
 from launch.conditions import IfCondition, LaunchConfigurationEquals
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import (
+    Command,
+    EnvironmentVariable,
+    LaunchConfiguration,
+    PathJoinSubstitution,
+)
 from launch_ros.actions import Node
 
 
@@ -20,6 +25,8 @@ def generate_launch_description():
     package_share = get_package_share_directory('rough_terrain_sim')
     world_path = os.path.join(package_share, 'worlds', 'rough_terrain.sdf')
     rviz_config_path = os.path.join(package_share, 'rviz', 'vis.rviz')
+    fwmax_xacro_path = os.path.join(
+        package_share, 'urdf', 'fwmax_skid_steer.urdf.xacro')
     models_path = os.path.join(package_share, 'models')
     husky_setup_path = os.path.join(package_share, 'config', 'husky')
     ouster_bridge_config = os.path.join(
@@ -30,6 +37,7 @@ def generate_launch_description():
         '-v 3 ',
         world_path,
     ]
+    fwmax_robot_description = Command(['xacro ', fwmax_xacro_path])
 
     husky_spawn = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -78,11 +86,31 @@ def generate_launch_description():
         condition=LaunchConfigurationEquals('robot', 'jackal'),
     )
 
+    fwmax_spawn = Node(
+        package='ros_gz_sim',
+        executable='create',
+        name='fwmax_spawn',
+        output='screen',
+        arguments=[
+            '-world', 'rough_terrain_world',
+            '-name', 'fwmax',
+            '-x', LaunchConfiguration('robot_x'),
+            '-y', LaunchConfiguration('robot_y'),
+            '-z', LaunchConfiguration('robot_z'),
+            '-Y', LaunchConfiguration('robot_yaw'),
+            '-topic', 'robot_description',
+        ],
+        condition=LaunchConfigurationEquals('robot', 'fwmax'),
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument(
             'robot', default_value='husky',
-            choices=['husky', 'jackal', 'none'],
-            description='Robot to spawn: Clearpath Husky A200, Jackal J100, or none.',
+            choices=['husky', 'jackal', 'fwmax', 'none'],
+            description=(
+                'Robot to spawn: Clearpath Husky A200, Jackal J100, '
+                'FW-max skid-steer approximation, or none.'
+            ),
         ),
         DeclareLaunchArgument(
             'rviz', default_value='true',
@@ -132,6 +160,40 @@ def generate_launch_description():
             arguments=['/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock'],
         ),
         Node(
+            package='robot_state_publisher',
+            executable='robot_state_publisher',
+            name='fwmax_robot_state_publisher',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'robot_description': fwmax_robot_description,
+            }],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='fwmax_gz_bridge',
+            output='screen',
+            arguments=[
+                '/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist',
+                '/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry',
+                '/tf@tf2_msgs/msg/TFMessage[ignition.msgs.Pose_V',
+                (
+                    '/world/rough_terrain_world/model/fwmax/joint_state'
+                    '@sensor_msgs/msg/JointState[ignition.msgs.Model'
+                ),
+            ],
+            remappings=[
+                (
+                    '/world/rough_terrain_world/model/fwmax/joint_state',
+                    '/joint_states',
+                ),
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',
             name='ouster_128_gz_bridge',
@@ -175,6 +237,6 @@ def generate_launch_description():
         ),
         TimerAction(
             period=3.0,
-            actions=[husky_spawn, jackal_spawn],
+            actions=[husky_spawn, jackal_spawn, fwmax_spawn],
         ),
     ])

@@ -1,8 +1,8 @@
 # rough_terrain_sim
 
 ROS 2 Humble과 Gazebo Fortress용 울퉁불퉁한 노면 시뮬레이션 패키지입니다.
-50 m × 50 m PNG heightmap 지형을 불러오며, Clearpath Husky A200 또는
-Jackal J100을 선택해 스폰할 수 있습니다.
+50 m × 50 m PNG heightmap 지형을 불러오며, Clearpath Husky A200,
+Jackal J100 또는 FW-max를 선택해 스폰할 수 있습니다.
 <p align="center">
   <img
     src="sample/sample.png"
@@ -26,11 +26,24 @@ sudo apt update
 sudo apt install ros-humble-clearpath-simulator
 ```
 
+FW-max를 사용하려면 `fwmax_ws`의 `isrl_robot_description` 패키지를 먼저
+빌드해야 합니다. `rough_terrain_sim`은 해당 패키지의 DAE mesh를 복사하지
+않고 직접 참조합니다.
+
+```bash
+cd ~/fwmax_ws
+source /opt/ros/humble/setup.bash
+colcon build --packages-select isrl_robot_description --symlink-install
+source install/setup.bash
+```
+
 ## 빌드
 
 ```bash
 cd ~/ros2_ws
 source /opt/ros/humble/setup.bash
+# FW-max를 사용할 경우 이 workspace를 underlay로 먼저 source합니다.
+source ~/fwmax_ws/install/setup.bash
 colcon build --packages-select rough_terrain_sim --symlink-install
 source install/setup.bash
 ```
@@ -54,6 +67,9 @@ ros2 launch rough_terrain_sim rough_terrain.launch.py robot:=husky
 
 # Jackal J100
 ros2 launch rough_terrain_sim rough_terrain.launch.py robot:=jackal
+
+# FW-max Pro (4륜 skid-steer 근사 모델)
+ros2 launch rough_terrain_sim rough_terrain.launch.py robot:=fwmax
 
 # 로봇 없이 지형만 실행
 ros2 launch rough_terrain_sim rough_terrain.launch.py robot:=none
@@ -83,21 +99,47 @@ ros2 launch rough_terrain_sim rough_terrain.launch.py \
 새 heightmap을 생성한 경우 해당 위치의 지형 높이에 맞춰 `robot_z`를
 조정하세요. 너무 높은 값은 특히 작은 Jackal이 낙하하며 전복될 수 있습니다.
 
+## FW-max skid-steer 모델
+
+FW-max의 실제 구동계는 4륜 독립 구동·독립 조향 swerve 방식이지만, 이
+패키지에서는 네 바퀴의 조향축을 고정한 4WD skid-steer 방식으로
+근사합니다. 따라서 `/cmd_vel`의 `linear.x`와 `angular.z`만 사용하며
+swerve의 횡이동을 위한 `linear.y`는 지원하지 않습니다.
+
+- 전체 질량: 125 kg
+- 전체 질량중심: `base_link` 원점
+- 휠베이스: 0.60 m
+- 윤거: 0.45 m
+- 바퀴 반경: 0.125 m
+- 외형: `isrl_robot_description/meshes/isrl_fwmax_pro.dae`
+- 물리 충돌: 단순화한 차체 box와 네 개의 cylinder 바퀴
+
+Gazebo의 DiffDrive 시스템이 좌우 각 두 개의 바퀴를 구동하며, WheelSlip
+시스템이 skid 회전에 필요한 횡방향 미끄러짐을 제공합니다. `/odom`,
+`/tf`, `/joint_states`는 ROS 2로 bridge됩니다.
+
 ## 키보드 조작
 
 Gazebo를 실행한 상태에서 새 터미널을 열고 workspace를 source합니다.
 
 ```bash
 source /opt/ros/humble/setup.bash
+source ~/fwmax_ws/install/setup.bash  # FW-max를 실행할 때
 source ~/ros2_ws/install/setup.bash
 ```
 
+Husky와 Jackal:
 
 ```bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard \
   --ros-args -r cmd_vel:=/platform/cmd_vel_unstamped
 ```
 
+FW-max:
+
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
 
 teleop을 실행한 터미널에 포커스를 둔 뒤 `i`, `,`, `j`, `l` 키로 조작합니다.
 
@@ -162,7 +204,7 @@ heightmap의 최대 고도 범위에 맞춘 값입니다. 다른 heightmap으로
 ```
 
 현재 값 `1.2`는 건조한 단단한 흙 또는 아스팔트에 가까운 시작점이며,
-Husky와 Jackal에 공통 적용됩니다.
+모든 로봇에 공통 적용됩니다.
 
 Clearpath 로봇은 별도로 WheelSlip 플러그인을 사용합니다. 이는 노면
 마찰계수가 아니라 바퀴가 미끄러지는 정도를 정하는 값입니다. 접지력을
@@ -172,6 +214,10 @@ Clearpath 로봇은 별도로 WheelSlip 플러그인을 사용합니다. 이는 
 <slip_compliance_longitudinal>0.1</slip_compliance_longitudinal>
 <slip_compliance_lateral>0.2</slip_compliance_lateral>
 ```
+
+FW-max 근사 모델도 같은 초기값을
+`urdf/fwmax_skid_steer.urdf.xacro`에서 사용합니다. FW-max의 값은 시스템
+설치 파일이 아니라 이 패키지의 Xacro에서 조정합니다.
 
 현재 Clearpath 설치 모델을 직접 바꾸는 명령은 아래와 같습니다. 이 변경은
 `apt upgrade`로 Clearpath 패키지가 갱신되면 원복될 수 있으며, 변경 후에는
@@ -229,7 +275,8 @@ rough_terrain_sim/
 │   └── jackal/
 │       └── robot.yaml
 ├── urdf/
-│   └── husky_ouster_os1_128.urdf.xacro
+│   ├── husky_ouster_os1_128.urdf.xacro
+│   └── fwmax_skid_steer.urdf.xacro
 ├── rviz/
 │   └── vis.rviz
 ├── rough_terrain_sim/
