@@ -8,6 +8,8 @@
 
   <xacro:property name="wheel_radius" value="0.125"/>
   <xacro:property name="wheel_width" value="0.080"/>
+  <xacro:property name="wheel_visual_radius" value="0.128"/>
+  <xacro:property name="wheel_visual_width" value="0.105"/>
   <xacro:property name="wheelbase" value="0.600"/>
   <xacro:property name="wheel_track" value="0.450"/>
   <xacro:property name="base_height" value="0.388"/>
@@ -22,8 +24,12 @@
   <xacro:property name="base_com_z" value="0.008694214876"/>
   <xacro:property name="wheel_mass" value="1.0"/>
 
+  <material name="fwmax_body_dark_silver">
+    <color rgba="0.32 0.34 0.37 1.0"/>
+  </material>
+
   <material name="fwmax_wheel_black">
-    <color rgba="0.08 0.08 0.08 1.0"/>
+    <color rgba="0.02 0.02 0.025 1.0"/>
   </material>
 
   <!-- Keep the inertial base_link below a massless KDL-compatible root. -->
@@ -46,6 +52,7 @@
           filename="file://$(find isrl_robot_description)/meshes/isrl_fwmax_pro.dae"
           scale="1 1 1"/>
       </geometry>
+      <material name="fwmax_body_dark_silver"/>
     </visual>
 
     <!-- Keep the expensive detailed DAE out of the contact calculation. -->
@@ -81,7 +88,8 @@
       <visual name="wheel_visual">
         <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
         <geometry>
-          <cylinder radius="0.120" length="0.060"/>
+          <cylinder
+            radius="${wheel_visual_radius}" length="${wheel_visual_width}"/>
         </geometry>
         <material name="fwmax_wheel_black"/>
       </visual>
