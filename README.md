@@ -26,24 +26,14 @@ sudo apt update
 sudo apt install ros-humble-clearpath-simulator
 ```
 
-FW-max를 사용하려면 `fwmax_ws`의 `isrl_robot_description` 패키지를 먼저
-빌드해야 합니다. `rough_terrain_sim`은 해당 패키지의 DAE mesh를 복사하지
-않고 직접 참조합니다.
-
-```bash
-cd ~/fwmax_ws
-source /opt/ros/humble/setup.bash
-colcon build --packages-select isrl_robot_description --symlink-install
-source install/setup.bash
-```
+FW-max visual DAE는 이 패키지의 `meshes/fwmax/`에 포함되어 있으므로
+별도의 FW-max workspace나 description 패키지가 필요하지 않습니다.
 
 ## 빌드
 
 ```bash
 cd ~/ros2_ws
 source /opt/ros/humble/setup.bash
-# FW-max를 사용할 경우 이 workspace를 underlay로 먼저 source합니다.
-source ~/fwmax_ws/install/setup.bash
 colcon build --packages-select rough_terrain_sim --symlink-install
 source install/setup.bash
 ```
@@ -115,7 +105,7 @@ swerve의 횡이동을 위한 `linear.y`는 지원하지 않습니다.
 - passive suspension: 바퀴별 수직 prismatic spring-damper
 - suspension 이동 범위: 70 mm (`-0.03 ~ +0.04 m`)
 - suspension 강성/감쇠: 바퀴당 20,000 N/m, 925 N·s/m
-- 외형: `isrl_robot_description/meshes/isrl_fwmax_pro.dae`
+- 외형: `rough_terrain_sim/meshes/fwmax/isrl_fwmax_pro.dae`
 - 물리 충돌: 단순화한 차체 box와 네 개의 cylinder 바퀴
 
 Gazebo의 DiffDrive 시스템이 좌우 각 두 개의 바퀴를 구동하며, WheelSlip
@@ -138,7 +128,6 @@ Gazebo를 실행한 상태에서 새 터미널을 열고 workspace를 source합�
 
 ```bash
 source /opt/ros/humble/setup.bash
-source ~/fwmax_ws/install/setup.bash  # FW-max를 실행할 때
 source ~/ros2_ws/install/setup.bash
 ```
 
@@ -288,6 +277,9 @@ rough_terrain_sim/
 │   │   └── ouster_128_bridge.yaml
 │   └── jackal/
 │       └── robot.yaml
+├── meshes/
+│   └── fwmax/
+│       └── isrl_fwmax_pro.dae
 ├── urdf/
 │   ├── husky_ouster_os1_128.urdf.xacro
 │   └── fwmax_skid_steer.urdf.xacro

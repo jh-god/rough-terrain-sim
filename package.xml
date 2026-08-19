@@ -13,7 +13,6 @@
   <exec_depend>clearpath_gz</exec_depend>
   <exec_depend>clearpath_sensors_description</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>isrl_robot_description</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>nav_msgs</exec_depend>

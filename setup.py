@@ -18,6 +18,8 @@ setup(
         (os.path.join('share', package_name, 'config', 'jackal'), glob('config/jackal/*.yaml')),
         (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
         (os.path.join('share', package_name, 'urdf'), glob('urdf/*.xacro')),
+        (os.path.join('share', package_name, 'meshes', 'fwmax'),
+         glob('meshes/fwmax/*.dae')),
         (os.path.join('share', package_name, 'worlds'), glob('worlds/*.sdf')),
         (os.path.join('share', package_name, 'models', 'rough_terrain'),
          glob('models/rough_terrain/model.*')),

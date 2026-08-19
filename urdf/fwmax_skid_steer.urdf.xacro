@@ -78,7 +78,7 @@
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
         <mesh
-          filename="file://$(find isrl_robot_description)/meshes/isrl_fwmax_pro.dae"
+          filename="file://$(find rough_terrain_sim)/meshes/fwmax/isrl_fwmax_pro.dae"
           scale="1 1 1"/>
       </geometry>
       <material name="fwmax_body_dark_silver"/>
