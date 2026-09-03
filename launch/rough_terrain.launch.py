@@ -278,12 +278,9 @@ def generate_launch_description():
         Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',
-            name='fwmax_gz_bridge',
+            name='fwmax_joint_state_gz_bridge',
             output='screen',
             arguments=[
-                '/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist',
-                '/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry',
-                '/tf@tf2_msgs/msg/TFMessage[ignition.msgs.Pose_V',
                 (
                     '/world/rough_terrain_world/model/fwmax/joint_state'
                     '@sensor_msgs/msg/JointState[ignition.msgs.Model'
@@ -297,6 +294,47 @@ def generate_launch_description():
             ],
             parameters=[{'use_sim_time': True}],
             condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='fwmax_skid_gz_bridge',
+            output='screen',
+            arguments=[
+                '/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist',
+                '/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry',
+                '/tf@tf2_msgs/msg/TFMessage[ignition.msgs.Pose_V',
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=fwmax_skid_condition,
+        ),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='fwmax_ground_truth_gz_bridge',
+            output='screen',
+            arguments=[
+                (
+                    '/ground_truth/odom@nav_msgs/msg/Odometry'
+                    '[ignition.msgs.Odometry'
+                ),
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=fwmax_swerve_condition,
+        ),
+        Node(
+            package='fwmax_dual_ackermann_controller',
+            executable='fwmax_planar_odometry',
+            name='fwmax_planar_odometry',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'input_topic': '/ground_truth/odom',
+                'output_topic': '/odom',
+                'odom_frame': 'odom',
+                'base_frame': 'base_footprint',
+            }],
+            condition=fwmax_swerve_condition,
         ),
         Node(
             package='ros_gz_bridge',

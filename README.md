@@ -211,11 +211,15 @@ ros2 launch rough_terrain_sim rough_terrain.launch.py \
 
 ### Odometry
 
-두 모드 모두 `/odom`, `/tf`, `/joint_states`를 ROS 2로 bridge합니다.
+두 모드 모두 `/odom`, `/tf`, `/joint_states`를 제공합니다. `skid` 모드의
+`odom → base_footprint`는 DiffDrive가 계산한 평면 odometry입니다.
 
-`skid` 모드의 `odom → base_footprint`는 DiffDrive가 계산한 평면
-odometry입니다. `swerve` 모드는 초기 구현 단계에서 Gazebo의 3D
-ground-truth odometry를 사용하므로 높이 변화와 roll/pitch도 포함합니다.
+`swerve` 모드에서는 Gazebo의 월드 기준 3D pose를
+`/ground_truth/odom`으로 보존합니다. `fwmax_dual_ackermann_controller`
+패키지의 `fwmax_planar_odometry` 노드는 처음 수신한 x, y, yaw를 원점으로
+저장하고, 이후 pose를 이 초기 좌표계로 변환하여 `/odom`과
+`odom → base_footprint` TF로 발행합니다. Navigation에 사용하는 이
+odometry에는 x, y, yaw만 포함되며 z, roll, pitch는 0입니다.
 
 원본 DAE에는 차체와 함께 고정된 바퀴 형상이 포함되어 있습니다. 실제로
 상하 이동·조향하고 지면과 접촉하는 검은 cylinder 바퀴와 DAE 바퀴가
@@ -386,8 +390,12 @@ gazebo_ws/src/
 │   ├── config/fwmax_controllers.yaml
 │   ├── fwmax_dual_ackermann_controller/
 │   │   ├── controller.py
-│   │   └── kinematics.py
-│   └── test/test_kinematics.py
+│   │   ├── fwmax_planar_odometry.py
+│   │   ├── kinematics.py
+│   │   └── planar_odometry.py
+│   └── test/
+│       ├── test_kinematics.py
+│       └── test_planar_odometry.py
 └── rough-terrain-sim/
     ├── README.md
     ├── launch/rough_terrain.launch.py
