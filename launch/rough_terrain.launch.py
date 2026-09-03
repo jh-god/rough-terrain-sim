@@ -266,18 +266,6 @@ def generate_launch_description():
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            name='fwmax_ouster_gz_static_tf',
-            output='screen',
-            arguments=[
-                '--frame-id', 'os0_64_link',
-                '--child-frame-id', 'fwmax/base_link/os0_64',
-            ],
-            parameters=[{'use_sim_time': True}],
-            condition=LaunchConfigurationEquals('robot', 'fwmax'),
-        ),
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
             name='fwmax_realsense_gz_static_tf',
             output='screen',
             arguments=[
