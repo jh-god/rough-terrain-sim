@@ -1,13 +1,20 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="fwmax">
   <!--
-    Gazebo approximation of the FW-max Pro swerve chassis as a four-wheel
-    skid-steer vehicle. The detailed DAE remains the visual model; simple
-    primitives are used for collision and wheel contact.
+    Gazebo approximation of the FW-max Pro chassis. drive_mode selects either
+    the legacy four-wheel skid-steer approximation or Gear 6 dual-Ackermann
+    steering. The detailed DAE remains the visual model; simple primitives are
+    used for collision and wheel contact.
   -->
 
   <xacro:arg name="namespace" default=""/>
   <xacro:arg name="is_sim" default="true"/>
+  <xacro:arg name="drive_mode" default="skid"/>
+  <xacro:arg
+    name="controllers_file"
+    default=""/>
+
+  <xacro:property name="drive_mode" value="$(arg drive_mode)"/>
 
   <xacro:include
     filename="$(find clearpath_sensors_description)/urdf/ouster_os1.urdf.xacro"/>
@@ -25,19 +32,21 @@
 
   <!--
     At zero suspension travel, the nominal ground plane is base_footprint z=0.
-    Keep 1 kg in each carrier and wheel, and place the remaining chassis mass
-    so the complete 195.84 kg robot COM is centred 0.255 m above the ground.
+    Keep 1 kg in each suspension / steering carrier and 5 kg in each wheel,
+    and place the remaining chassis mass so the complete 195.84 kg robot COM
+    is centred 0.255 m above the ground.
   -->
   <xacro:property name="total_mass" value="195.84"/>
   <xacro:property name="target_com_height" value="0.255"/>
-  <xacro:property name="suspension_mass" value="1.0"/>
+  <xacro:property name="suspension_mass" value="0.5"/>
+  <xacro:property name="steering_mass" value="0.5"/>
   <xacro:property name="wheel_mass" value="5.0"/>
   <xacro:property
     name="base_mass"
-    value="${total_mass - 4.0 * (suspension_mass + wheel_mass)}"/>
+    value="${total_mass - 4.0 * (suspension_mass + steering_mass + wheel_mass)}"/>
   <xacro:property
     name="base_com_z"
-    value="${(total_mass * (target_com_height - base_height) - 4.0 * (suspension_mass + wheel_mass) * wheel_center_z) / base_mass}"/>
+    value="${(total_mass * (target_com_height - base_height) - 4.0 * (suspension_mass + steering_mass + wheel_mass) * wheel_center_z) / base_mass}"/>
 
   <!-- Positive joint travel compresses the wheel upward toward the chassis. -->
   <xacro:property name="suspension_lower_limit" value="-0.030"/>
@@ -51,11 +60,15 @@
   <xacro:property
     name="nominal_wheel_normal_force"
     value="${total_mass * 9.81 / 4.0}"/>
+  <xacro:property
+    name="slip_compliance_lateral"
+    value="${0.02 if drive_mode == 'swerve' else 0.2}"/>
 
   <!--
-    Total mass is 195.84 kg: 187.84 kg for the chassis, plus a 1 kg suspension
-    carrier and a 1 kg wheel at each corner. At the designed loaded equilibrium
-    position, the assembled COM is at x=0, y=0, z=-0.133 m in base_link.
+    Total mass is 195.84 kg: 171.84 kg for the chassis, plus a 0.5 kg
+    suspension carrier, 0.5 kg steering carrier, and 5 kg wheel at each corner.
+    At the designed loaded equilibrium position, the assembled COM is at x=0,
+    y=0, z=-0.133 m in base_link.
   -->
 
   <material name="fwmax_body_dark_silver">
@@ -191,6 +204,34 @@
       <springStiffness>${suspension_stiffness}</springStiffness>
     </gazebo>
 
+    <link name="${prefix}_steering_link">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${steering_mass}"/>
+        <inertia
+          ixx="0.0005" ixy="0.0" ixz="0.0"
+          iyy="0.0005" iyz="0.0" izz="0.0005"/>
+      </inertial>
+    </link>
+
+    <xacro:if value="${drive_mode == 'swerve'}">
+      <joint name="${prefix}_steering_joint" type="continuous">
+        <parent link="${prefix}_suspension_link"/>
+        <child link="${prefix}_steering_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit effort="1200.0" velocity="2.5"/>
+        <dynamics damping="0.5" friction="0.0"/>
+      </joint>
+    </xacro:if>
+    <xacro:unless value="${drive_mode == 'swerve'}">
+      <joint name="${prefix}_steering_joint" type="fixed">
+        <parent link="${prefix}_suspension_link"/>
+        <child link="${prefix}_steering_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </joint>
+    </xacro:unless>
+
     <link name="${prefix}_wheel_link">
       <inertial>
         <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -223,7 +264,7 @@
     </link>
 
     <joint name="${prefix}_wheel_joint" type="continuous">
-      <parent link="${prefix}_suspension_link"/>
+      <parent link="${prefix}_steering_link"/>
       <child link="${prefix}_wheel_link"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
@@ -242,60 +283,156 @@
   <xacro:fwmax_wheel
     prefix="rear_right" x="${-wheelbase / 2.0}" y="${-wheel_track / 2.0}"/>
 
+  <xacro:if value="${drive_mode == 'swerve'}">
+    <ros2_control name="fwmax_swerve_system" type="system">
+      <hardware>
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      </hardware>
+
+      <joint name="front_left_steering_joint">
+        <command_interface name="velocity">
+          <param name="min">-2.5</param>
+          <param name="max">2.5</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="front_right_steering_joint">
+        <command_interface name="velocity">
+          <param name="min">-2.5</param>
+          <param name="max">2.5</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="rear_left_steering_joint">
+        <command_interface name="velocity">
+          <param name="min">-2.5</param>
+          <param name="max">2.5</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="rear_right_steering_joint">
+        <command_interface name="velocity">
+          <param name="min">-2.5</param>
+          <param name="max">2.5</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="front_left_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-20.0</param>
+          <param name="max">20.0</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="front_right_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-20.0</param>
+          <param name="max">20.0</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="rear_left_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-20.0</param>
+          <param name="max">20.0</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="rear_right_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-20.0</param>
+          <param name="max">20.0</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+    </ros2_control>
+  </xacro:if>
+
   <gazebo>
-    <plugin
-      filename="libignition-gazebo-diff-drive-system.so"
-      name="ignition::gazebo::systems::DiffDrive">
-      <left_joint>front_left_wheel_joint</left_joint>
-      <left_joint>rear_left_wheel_joint</left_joint>
-      <right_joint>front_right_wheel_joint</right_joint>
-      <right_joint>rear_right_wheel_joint</right_joint>
-      <wheel_separation>${wheel_track}</wheel_separation>
-      <wheel_radius>${wheel_radius}</wheel_radius>
-      <topic>/cmd_vel</topic>
-      <odom_topic>/odom</odom_topic>
-      <tf_topic>/tf</tf_topic>
-      <frame_id>odom</frame_id>
-      <child_frame_id>base_footprint</child_frame_id>
-      <odom_publish_frequency>50</odom_publish_frequency>
-      <max_linear_acceleration>0.8</max_linear_acceleration>
-      <min_linear_acceleration>-0.8</min_linear_acceleration>
-      <max_angular_acceleration>1.5</max_angular_acceleration>
-      <min_angular_acceleration>-1.5</min_angular_acceleration>
-      <max_linear_velocity>2.0</max_linear_velocity>
-      <min_linear_velocity>-2.0</min_linear_velocity>
-      <max_angular_velocity>1.5</max_angular_velocity>
-      <min_angular_velocity>-1.5</min_angular_velocity>
-    </plugin>
+    <xacro:unless value="${drive_mode == 'swerve'}">
+      <plugin
+        filename="libignition-gazebo-diff-drive-system.so"
+        name="ignition::gazebo::systems::DiffDrive">
+        <left_joint>front_left_wheel_joint</left_joint>
+        <left_joint>rear_left_wheel_joint</left_joint>
+        <right_joint>front_right_wheel_joint</right_joint>
+        <right_joint>rear_right_wheel_joint</right_joint>
+        <wheel_separation>${wheel_track}</wheel_separation>
+        <wheel_radius>${wheel_radius}</wheel_radius>
+        <topic>/cmd_vel</topic>
+        <odom_topic>/odom</odom_topic>
+        <tf_topic>/tf</tf_topic>
+        <frame_id>odom</frame_id>
+        <child_frame_id>base_footprint</child_frame_id>
+        <odom_publish_frequency>50</odom_publish_frequency>
+        <max_linear_acceleration>0.8</max_linear_acceleration>
+        <min_linear_acceleration>-0.8</min_linear_acceleration>
+        <max_angular_acceleration>1.5</max_angular_acceleration>
+        <min_angular_acceleration>-1.5</min_angular_acceleration>
+        <max_linear_velocity>2.0</max_linear_velocity>
+        <min_linear_velocity>-2.0</min_linear_velocity>
+        <max_angular_velocity>1.5</max_angular_velocity>
+        <min_angular_velocity>-1.5</min_angular_velocity>
+      </plugin>
+    </xacro:unless>
+
+    <xacro:if value="${drive_mode == 'swerve'}">
+      <plugin
+        filename="libign_ros2_control-system.so"
+        name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>$(arg controllers_file)</parameters>
+        <robot_param>robot_description</robot_param>
+        <robot_param_node>fwmax_robot_state_publisher</robot_param_node>
+      </plugin>
+      <plugin
+        filename="libignition-gazebo-odometry-publisher-system.so"
+        name="ignition::gazebo::systems::OdometryPublisher">
+        <dimensions>3</dimensions>
+        <odom_topic>/odom</odom_topic>
+        <tf_topic>/tf</tf_topic>
+        <odom_frame>odom</odom_frame>
+        <robot_base_frame>base_footprint</robot_base_frame>
+        <odom_publish_frequency>50</odom_publish_frequency>
+      </plugin>
+    </xacro:if>
 
     <plugin
       filename="libignition-gazebo-joint-state-publisher-system.so"
       name="ignition::gazebo::systems::JointStatePublisher"/>
 
-    <!-- Lateral compliance is required for a fixed-wheel chassis to turn. -->
+    <!-- Skid mode needs lateral slip; swerve mode uses lower compliance. -->
     <plugin
       filename="libignition-gazebo-wheel-slip-system.so"
       name="ignition::gazebo::systems::WheelSlip">
       <wheel link_name="front_left_wheel_link">
-        <slip_compliance_lateral>0.2</slip_compliance_lateral>
+        <slip_compliance_lateral>${slip_compliance_lateral}</slip_compliance_lateral>
         <slip_compliance_longitudinal>0.1</slip_compliance_longitudinal>
         <wheel_normal_force>${nominal_wheel_normal_force}</wheel_normal_force>
         <wheel_radius>${wheel_radius}</wheel_radius>
       </wheel>
       <wheel link_name="rear_left_wheel_link">
-        <slip_compliance_lateral>0.2</slip_compliance_lateral>
+        <slip_compliance_lateral>${slip_compliance_lateral}</slip_compliance_lateral>
         <slip_compliance_longitudinal>0.1</slip_compliance_longitudinal>
         <wheel_normal_force>${nominal_wheel_normal_force}</wheel_normal_force>
         <wheel_radius>${wheel_radius}</wheel_radius>
       </wheel>
       <wheel link_name="front_right_wheel_link">
-        <slip_compliance_lateral>0.2</slip_compliance_lateral>
+        <slip_compliance_lateral>${slip_compliance_lateral}</slip_compliance_lateral>
         <slip_compliance_longitudinal>0.1</slip_compliance_longitudinal>
         <wheel_normal_force>${nominal_wheel_normal_force}</wheel_normal_force>
         <wheel_radius>${wheel_radius}</wheel_radius>
       </wheel>
       <wheel link_name="rear_right_wheel_link">
-        <slip_compliance_lateral>0.2</slip_compliance_lateral>
+        <slip_compliance_lateral>${slip_compliance_lateral}</slip_compliance_lateral>
         <slip_compliance_longitudinal>0.1</slip_compliance_longitudinal>
         <wheel_normal_force>${nominal_wheel_normal_force}</wheel_normal_force>
         <wheel_radius>${wheel_radius}</wheel_radius>

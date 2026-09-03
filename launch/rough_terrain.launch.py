@@ -17,9 +17,11 @@ from launch.substitutions import (
     EnvironmentVariable,
     LaunchConfiguration,
     PathJoinSubstitution,
+    PythonExpression,
 )
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
@@ -40,10 +42,34 @@ def generate_launch_description():
         '-v 3 ',
         world_path,
     ]
-    fwmax_robot_description = ParameterValue(
-        Command(['xacro ', fwmax_xacro_path]),
+    fwmax_skid_robot_description = ParameterValue(
+        Command([
+            'xacro ', fwmax_xacro_path,
+            ' drive_mode:=skid',
+        ]),
         value_type=str,
     )
+    fwmax_swerve_robot_description = ParameterValue(
+        Command([
+            'xacro ', fwmax_xacro_path,
+            ' drive_mode:=swerve',
+            ' controllers_file:=',
+            PathJoinSubstitution([
+                FindPackageShare('fwmax_dual_ackermann_controller'),
+                'config',
+                'fwmax_controllers.yaml',
+            ]),
+        ]),
+        value_type=str,
+    )
+    fwmax_skid_condition = IfCondition(PythonExpression([
+        "'", LaunchConfiguration('robot'), "' == 'fwmax' and '",
+        LaunchConfiguration('fwmax_drive_mode'), "' == 'skid'",
+    ]))
+    fwmax_swerve_condition = IfCondition(PythonExpression([
+        "'", LaunchConfiguration('robot'), "' == 'fwmax' and '",
+        LaunchConfiguration('fwmax_drive_mode'), "' == 'swerve'",
+    ]))
 
     husky_spawn = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -115,7 +141,15 @@ def generate_launch_description():
             choices=['husky', 'jackal', 'fwmax', 'none'],
             description=(
                 'Robot to spawn: Clearpath Husky A200, Jackal J100, '
-                'FW-max skid-steer approximation, or none.'
+                'selectable-drive FW-max, or none.'
+            ),
+        ),
+        DeclareLaunchArgument(
+            'fwmax_drive_mode', default_value='skid',
+            choices=['skid', 'swerve'],
+            description=(
+                'FW-max drive model: legacy skid approximation or Gear 6 '
+                'dual-Ackermann four-wheel steering.'
             ),
         ),
         DeclareLaunchArgument(
@@ -172,9 +206,20 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'use_sim_time': True,
-                'robot_description': fwmax_robot_description,
+                'robot_description': fwmax_skid_robot_description,
             }],
-            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+            condition=fwmax_skid_condition,
+        ),
+        Node(
+            package='robot_state_publisher',
+            executable='robot_state_publisher',
+            name='fwmax_robot_state_publisher',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'robot_description': fwmax_swerve_robot_description,
+            }],
+            condition=fwmax_swerve_condition,
         ),
         Node(
             package='ros_gz_bridge',
@@ -312,6 +357,43 @@ def generate_launch_description():
                 'output_frame': 'camera_link',
             }],
             condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        TimerAction(
+            period=4.0,
+            actions=[
+                Node(
+                    package='controller_manager',
+                    executable='spawner',
+                    name='fwmax_steering_controller_spawner',
+                    output='screen',
+                    arguments=[
+                        'fwmax_steering_controller',
+                        '--controller-manager', '/controller_manager',
+                        '--controller-manager-timeout', '60',
+                    ],
+                    condition=fwmax_swerve_condition,
+                ),
+                Node(
+                    package='controller_manager',
+                    executable='spawner',
+                    name='fwmax_wheel_controller_spawner',
+                    output='screen',
+                    arguments=[
+                        'fwmax_wheel_controller',
+                        '--controller-manager', '/controller_manager',
+                        '--controller-manager-timeout', '60',
+                    ],
+                    condition=fwmax_swerve_condition,
+                ),
+                Node(
+                    package='fwmax_dual_ackermann_controller',
+                    executable='dual_ackermann_controller',
+                    name='fwmax_dual_ackermann_controller',
+                    output='screen',
+                    parameters=[{'use_sim_time': True}],
+                    condition=fwmax_swerve_condition,
+                ),
+            ],
         ),
         Node(
             package='rviz2',
