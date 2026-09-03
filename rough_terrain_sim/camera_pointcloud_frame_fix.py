@@ -7,7 +7,6 @@ from rclpy.qos import (
     HistoryPolicy,
     QoSProfile,
     ReliabilityPolicy,
-    qos_profile_sensor_data,
 )
 from sensor_msgs.msg import PointCloud2
 
@@ -47,7 +46,7 @@ class CameraPointCloudFrameFix(Node):
             PointCloud2,
             input_topic,
             self.pointcloud_callback,
-            qos_profile_sensor_data,
+            output_qos,
         )
 
         self.get_logger().info(
@@ -79,7 +78,8 @@ def main(args=None):
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

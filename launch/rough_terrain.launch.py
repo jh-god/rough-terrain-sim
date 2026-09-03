@@ -33,6 +33,8 @@ def generate_launch_description():
     ouster_bridge_config = os.path.join(
         husky_setup_path, 'ouster_128_bridge.yaml')
     jackal_setup_path = os.path.join(package_share, 'config', 'jackal')
+    fwmax_sensor_bridge_config = os.path.join(
+        package_share, 'config', 'fwmax', 'sensors_bridge.yaml')
     gazebo_args = [
         '-r ',
         '-v 3 ',
@@ -177,6 +179,72 @@ def generate_launch_description():
         Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',
+            name='fwmax_sensor_gz_bridge',
+            namespace='sensors',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'config_file': fwmax_sensor_bridge_config,
+            }],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
+            package='ros_gz_image',
+            executable='image_bridge',
+            name='fwmax_realsense_color_bridge',
+            output='screen',
+            arguments=['/sensors/camera/image'],
+            remappings=[
+                (
+                    '/sensors/camera/image',
+                    '/sensors/camera/color/image',
+                ),
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
+            package='ros_gz_image',
+            executable='image_bridge',
+            name='fwmax_realsense_depth_bridge',
+            output='screen',
+            arguments=['/sensors/camera/depth_image'],
+            remappings=[
+                (
+                    '/sensors/camera/depth_image',
+                    '/sensors/camera/depth/image',
+                ),
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='fwmax_ouster_gz_static_tf',
+            output='screen',
+            arguments=[
+                '--frame-id', 'os0_64_link',
+                '--child-frame-id', 'fwmax/base_link/os0_64',
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='fwmax_realsense_gz_static_tf',
+            output='screen',
+            arguments=[
+                '--frame-id', 'camera_link',
+                '--child-frame-id', 'fwmax/base_link/camera',
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
             name='fwmax_gz_bridge',
             output='screen',
             arguments=[
@@ -229,6 +297,21 @@ def generate_launch_description():
             name='camera_pointcloud_frame_fix',
             output='screen',
             parameters=[{'use_sim_time': True}],
+            condition=LaunchConfigurationEquals('robot', 'husky'),
+        ),
+        Node(
+            package='rough_terrain_sim',
+            executable='camera_pointcloud_frame_fix',
+            name='fwmax_camera_pointcloud_frame_fix',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'input_topic': '/sensors/camera/points',
+                'output_topic': '/sensors/camera/points_aligned',
+                'input_frame': 'camera_color_optical_frame',
+                'output_frame': 'camera_link',
+            }],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
         ),
         Node(
             package='rviz2',

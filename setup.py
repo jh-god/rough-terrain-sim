@@ -16,6 +16,7 @@ setup(
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         (os.path.join('share', package_name, 'config', 'husky'), glob('config/husky/*.yaml')),
         (os.path.join('share', package_name, 'config', 'jackal'), glob('config/jackal/*.yaml')),
+        (os.path.join('share', package_name, 'config', 'fwmax'), glob('config/fwmax/*.yaml')),
         (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
         (os.path.join('share', package_name, 'urdf'), glob('urdf/*.xacro')),
         (os.path.join('share', package_name, 'meshes', 'fwmax'),

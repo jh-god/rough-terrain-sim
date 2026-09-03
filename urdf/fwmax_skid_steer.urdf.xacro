@@ -6,6 +6,14 @@
     primitives are used for collision and wheel contact.
   -->
 
+  <xacro:arg name="namespace" default=""/>
+  <xacro:arg name="is_sim" default="true"/>
+
+  <xacro:include
+    filename="$(find clearpath_sensors_description)/urdf/ouster_os1.urdf.xacro"/>
+  <xacro:include
+    filename="$(find clearpath_sensors_description)/urdf/intel_realsense.urdf.xacro"/>
+
   <xacro:property name="wheel_radius" value="0.125"/>
   <xacro:property name="wheel_width" value="0.080"/>
   <xacro:property name="wheel_visual_radius" value="0.128"/>
@@ -92,9 +100,9 @@
       </geometry>
     </collision> -->
     <collision name="base_collision">
-      <origin xyz="0 0 0.032" rpy="0 0 0"/>
+      <origin xyz="0 0 0.10" rpy="0 0 0"/>
       <geometry>
-        <box size="0.76 0.40 0.60"/>
+        <box size="0.76 0.40 0.80"/>
       </geometry>
     </collision>
   </link>
@@ -104,6 +112,54 @@
     <child link="base_link"/>
     <origin xyz="0 0 ${base_height}" rpy="0 0 0"/>
   </joint>
+
+  <!--
+    Ouster OS1-64. The imported model places its measurement frame 0.060695 m
+    above the mounting origin (base height 0.0225 m + sensor offset 0.038195 m).
+    Offset the mount so the requested os_sensor frame is exactly at
+    xyz="0.32 0.0 0.505" relative to base_link.
+  -->
+  <xacro:ouster_os1
+    name="os1_64"
+    parent_link="base_link"
+    samples_v="64">
+    <origin
+      xyz="0.32 0.0 0.505"
+      rpy="0.0 0.0 0.0"/>
+  </xacro:ouster_os1>
+
+  <!-- Alias the imported Ouster measurement frame to the requested name. -->
+  <link name="os_sensor"/>
+  <joint name="os_sensor_joint" type="fixed">
+    <parent link="os1_64_sensor_link"/>
+    <child link="os_sensor"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!--
+    RealSense D435. Its imported macro defines camera_link 0.0106, 0.0175,
+    0.0125 m from the bottom-screw frame. Compensate that internal offset so
+    base_link -> camera_link is exactly xyz="0.41 0.01 0.335" and
+    rpy="0.0 0.7854 0.0".
+  -->
+  <xacro:property name="camera_pitch" value="0.7854"/>
+  <xacro:property name="camera_internal_x" value="0.0106"/>
+  <xacro:property name="camera_internal_y" value="0.0175"/>
+  <xacro:property name="camera_internal_z" value="0.0125"/>
+  <xacro:property
+    name="camera_mount_x"
+    value="${0.41 - (cos(camera_pitch) * camera_internal_x + sin(camera_pitch) * camera_internal_z)}"/>
+  <xacro:property
+    name="camera_mount_y"
+    value="${0.01 - camera_internal_y}"/>
+  <xacro:property
+    name="camera_mount_z"
+    value="${0.335 - (-sin(camera_pitch) * camera_internal_x + cos(camera_pitch) * camera_internal_z)}"/>
+  <xacro:intel_realsense name="camera" parent_link="base_link">
+    <origin
+      xyz="${camera_mount_x} ${camera_mount_y} ${camera_mount_z}"
+      rpy="0.0 ${camera_pitch} 0.0"/>
+  </xacro:intel_realsense>
 
   <xacro:macro name="fwmax_wheel" params="prefix x y">
     <link name="${prefix}_suspension_link">
