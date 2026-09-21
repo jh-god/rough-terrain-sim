@@ -14,13 +14,26 @@ platform:
     - name: rear_fender
       type: j100.fender
       rpy: [0.0, 0.0, 3.1415]
+mounts:
+  post:
+    - parent: default_mount
+      model: dual
+      # The posts plus the 6 mm disk preserve the original 0.2 m sensor height.
+      height: 0.194
+      spacing: 0.1
+      xyz: [0.0, 0.0, 0.0]
+      rpy: [0.0, 0.0, 0.0]
+  disk:
+    - parent: post_0_mount
+      xyz: [0.0, 0.0, 0.0]
+      rpy: [0.0, 0.0, 0.0]
 sensors:
   lidar3d:
     - model: velodyne_lidar
       urdf_enabled: true
       launch_enabled: true
-      parent: default_mount
-      xyz: [0.0, 0.0, 0.2]
+      parent: disk_0_mount
+      xyz: [0.0, 0.0, 0.0]
       rpy: [0.0, 0.0, 0.0]
       ros_parameters:
         velodyne_driver_node:

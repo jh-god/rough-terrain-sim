@@ -5,12 +5,13 @@ ROS 2 Humble과 Gazebo Fortress용 울퉁불퉁한 노면 시뮬레이션 패키
 Jackal J100 또는 FW-max를 선택해 스폰할 수 있습니다. FW-max는 기존
 skid-steer 근사 모델과 Gear 6 dual-Ackermann 4륜 조향 모델을 선택할 수
 있습니다.
-<p align="center">
-  <img
-    src="sample/sample.png"
-    alt="Gazebo Fortress 16-bit heightmap"
-    width="500">
-</p>
+
+| Husky A200 | Jackal J100 | FW-max Pro |
+| :---: | :---: | :---: |
+| [<img src="sample/husky.png" alt="울퉁불퉁한 지형 위의 Husky A200 Gazebo 화면" width="300">](sample/husky.png) | [<img src="sample/jackal.png" alt="울퉁불퉁한 지형 위의 Jackal J100 Gazebo 화면" width="300">](sample/jackal.png) | [<img src="sample/fwmax.png" alt="울퉁불퉁한 지형 위의 FW-max Pro Gazebo 화면" width="300">](sample/fwmax.png) |
+
+같은 지형 환경에서 실행한 로봇별 Gazebo 화면입니다. 이미지를 클릭하면
+원본 크기로 확인할 수 있습니다.
 
 ## 요구 사항
 
@@ -276,6 +277,19 @@ Gazebo Fortress RGB-D point cloud의 frame 표기가 실제 point 배열 방향�
 맞지 않는 경우를 보정하기 위해 `camera_pointcloud_frame_fix` 노드가 원본
 cloud를 `camera_link` frame의 `/sensors/camera/points_aligned`로 다시
 발행합니다.
+
+### 센서 시각화
+
+FW-max의 LiDAR 포인트 클라우드와 RGB·Depth 영상을 RViz2에서 확인한
+예시입니다.
+
+<p align="center">
+  <a href="sample/sensor_viz.png">
+    <img src="sample/sensor_viz.png"
+         alt="FW-max의 LiDAR 포인트 클라우드와 RGB·Depth 영상을 표시한 RViz2 화면"
+         width="900">
+  </a>
+</p>
 
 ## 키보드 조작
 
