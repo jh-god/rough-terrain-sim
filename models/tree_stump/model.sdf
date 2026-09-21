@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<sdf version="1.8">
+  <model name="tree_stump">
+    <static>true</static>
+    <link name="stump_link">
+      <!-- Approximate the solid centre while leaving irregular roots visual-only. -->
+      <collision name="stump_collision">
+        <pose>0 0 0.02 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.52</radius>
+            <length>0.40</length>
+          </cylinder>
+        </geometry>
+      </collision>
+
+      <visual name="stump_visual">
+        <cast_shadows>true</cast_shadows>
+        <geometry>
+          <mesh>
+            <uri>model://tree_stump/meshes/tree_stump_01.obj</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>

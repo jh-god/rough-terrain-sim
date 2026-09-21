@@ -6,6 +6,22 @@ from setuptools import find_packages, setup
 
 package_name = 'rough_terrain_sim'
 
+
+def model_data_files():
+    """Install every Gazebo model and its nested assets."""
+    data_files = []
+    for directory, _, filenames in os.walk('models'):
+        sources = [
+            os.path.join(directory, filename)
+            for filename in sorted(filenames)
+            if os.path.isfile(os.path.join(directory, filename))
+        ]
+        if sources:
+            destination = os.path.join('share', package_name, directory)
+            data_files.append((destination, sources))
+    return sorted(data_files)
+
+
 setup(
     name=package_name,
     version='0.1.0',
@@ -22,13 +38,7 @@ setup(
         (os.path.join('share', package_name, 'meshes', 'fwmax'),
          glob('meshes/fwmax/*.dae')),
         (os.path.join('share', package_name, 'worlds'), glob('worlds/*.sdf')),
-        (os.path.join('share', package_name, 'models', 'rough_terrain'),
-         glob('models/rough_terrain/model.*')),
-        (os.path.join('share', package_name, 'models', 'rough_terrain', 'heightmaps'),
-         glob('models/rough_terrain/heightmaps/*')),
-        (os.path.join('share', package_name, 'models', 'rough_terrain', 'textures'),
-         glob('models/rough_terrain/textures/*')),
-    ],
+    ] + model_data_files(),
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='rough_terrain_sim maintainer',

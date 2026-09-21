@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<sdf version="1.8">
+  <model name="boulder_01">
+    <static>true</static>
+    <link name="boulder_link">
+      <collision name="boulder_collision">
+        <pose>-0.10 0.03 0.36 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.15 1.60 0.85</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="boulder_visual">
+        <cast_shadows>true</cast_shadows>
+        <geometry>
+          <mesh>
+            <uri>model://boulder_01/meshes/boulder_01.obj</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>

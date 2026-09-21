@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<sdf version="1.8">
+  <model name="tree">
+    <static>true</static>
+    <link name="tree_link">
+      <!-- Only the lower trunk participates in physics. The detailed canopy is
+           visual-only so terrain contact and vehicle collision stay stable. -->
+      <collision name="trunk_collision">
+        <pose>0.08 -0.08 0.8 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.16</radius>
+            <length>1.6</length>
+          </cylinder>
+        </geometry>
+      </collision>
+
+      <visual name="tree_visual">
+        <cast_shadows>true</cast_shadows>
+        <geometry>
+          <mesh>
+            <uri>model://tree/meshes/tree_small_02.obj</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>

@@ -43,6 +43,15 @@ FW-max workspace나 description 패키지는 필요하지 않습니다.
 
 ## 빌드
 
+Asset 메시와 텍스처, 원본 USDC는 Git LFS로 관리합니다. 빌드 전에 저장소
+디렉터리에서 실제 파일을 내려받으세요 (`git-lfs` 설치 필요).
+
+```bash
+cd ~/gazebo_ws/src/rough-terrain-sim
+git lfs install --local
+git lfs pull
+```
+
 ```bash
 cd ~/gazebo_ws
 source /opt/ros/humble/setup.bash
@@ -96,6 +105,16 @@ ros2 launch rough_terrain_sim rough_terrain.launch.py robot:=none
 
 Gazebo가 열리면 카메라는 지형의 기본 스폰 구역 부근을 바라봅니다.
 로봇은 Gazebo 시작 약 3초 후 생성됩니다.
+
+기본 world에는 `dev-asset`에서 가져온 나무 20개, 그루터기 5개,
+바위 12개가 함께 배치됩니다. 모델은 `models/tree`, `models/tree_stump`,
+`models/boulder_01`, `models/namaqualand_boulder_02`에 있으며, 각 모델의
+`LICENSE.asset`에 출처와 라이선스를 보존했습니다. 메시와 텍스처를 포함한
+하위 파일들은 빌드 시 자동 설치됩니다.
+
+배치는 `worlds/rough_terrain.sdf`의 `<include>`에서 관리합니다. 배치 높이는
+기본 `terrain_heightmap_1024_gray16.png`에 맞춰져 있으므로
+`navigation_terrain_v2.png` 등 다른 heightmap 사용 시 z 위치를 조정하세요.
 
 주요 launch 인자는 다음과 같습니다.
 
