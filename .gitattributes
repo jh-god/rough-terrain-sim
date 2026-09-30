@@ -1,0 +1,21 @@
+# Scope LFS to imported assets; existing terrain images keep their storage format.
+models/tree/**/*.obj filter=lfs diff=lfs merge=lfs -text
+models/tree/**/*.usdc filter=lfs diff=lfs merge=lfs -text
+models/tree/**/*.exr filter=lfs diff=lfs merge=lfs -text
+models/tree/**/*.png filter=lfs diff=lfs merge=lfs -text
+models/tree/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+models/tree_stump/**/*.obj filter=lfs diff=lfs merge=lfs -text
+models/tree_stump/**/*.usdc filter=lfs diff=lfs merge=lfs -text
+models/tree_stump/**/*.exr filter=lfs diff=lfs merge=lfs -text
+models/tree_stump/**/*.png filter=lfs diff=lfs merge=lfs -text
+models/tree_stump/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+models/boulder_01/**/*.obj filter=lfs diff=lfs merge=lfs -text
+models/boulder_01/**/*.usdc filter=lfs diff=lfs merge=lfs -text
+models/boulder_01/**/*.exr filter=lfs diff=lfs merge=lfs -text
+models/boulder_01/**/*.png filter=lfs diff=lfs merge=lfs -text
+models/boulder_01/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+models/namaqualand_boulder_02/**/*.obj filter=lfs diff=lfs merge=lfs -text
+models/namaqualand_boulder_02/**/*.usdc filter=lfs diff=lfs merge=lfs -text
+models/namaqualand_boulder_02/**/*.exr filter=lfs diff=lfs merge=lfs -text
+models/namaqualand_boulder_02/**/*.png filter=lfs diff=lfs merge=lfs -text
+models/namaqualand_boulder_02/**/*.jpg filter=lfs diff=lfs merge=lfs -text

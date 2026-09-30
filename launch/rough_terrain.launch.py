@@ -12,24 +12,64 @@ from launch.actions import (
 )
 from launch.conditions import IfCondition, LaunchConfigurationEquals
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import (
+    Command,
+    EnvironmentVariable,
+    LaunchConfiguration,
+    PathJoinSubstitution,
+    PythonExpression,
+)
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
     package_share = get_package_share_directory('rough_terrain_sim')
     world_path = os.path.join(package_share, 'worlds', 'rough_terrain.sdf')
     rviz_config_path = os.path.join(package_share, 'rviz', 'vis.rviz')
+    fwmax_xacro_path = os.path.join(
+        package_share, 'urdf', 'fwmax_skid_steer.urdf.xacro')
     models_path = os.path.join(package_share, 'models')
     husky_setup_path = os.path.join(package_share, 'config', 'husky')
     ouster_bridge_config = os.path.join(
         husky_setup_path, 'ouster_128_bridge.yaml')
     jackal_setup_path = os.path.join(package_share, 'config', 'jackal')
+    fwmax_sensor_bridge_config = os.path.join(
+        package_share, 'config', 'fwmax', 'sensors_bridge.yaml')
     gazebo_args = [
         '-r ',
         '-v 3 ',
         world_path,
     ]
+    fwmax_skid_robot_description = ParameterValue(
+        Command([
+            'xacro ', fwmax_xacro_path,
+            ' drive_mode:=skid',
+        ]),
+        value_type=str,
+    )
+    fwmax_swerve_robot_description = ParameterValue(
+        Command([
+            'xacro ', fwmax_xacro_path,
+            ' drive_mode:=swerve',
+            ' controllers_file:=',
+            PathJoinSubstitution([
+                FindPackageShare('fwmax_dual_ackermann_controller'),
+                'config',
+                'fwmax_controllers.yaml',
+            ]),
+        ]),
+        value_type=str,
+    )
+    fwmax_skid_condition = IfCondition(PythonExpression([
+        "'", LaunchConfiguration('robot'), "' == 'fwmax' and '",
+        LaunchConfiguration('fwmax_drive_mode'), "' == 'skid'",
+    ]))
+    fwmax_swerve_condition = IfCondition(PythonExpression([
+        "'", LaunchConfiguration('robot'), "' == 'fwmax' and '",
+        LaunchConfiguration('fwmax_drive_mode'), "' == 'swerve'",
+    ]))
 
     husky_spawn = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -78,11 +118,39 @@ def generate_launch_description():
         condition=LaunchConfigurationEquals('robot', 'jackal'),
     )
 
+    fwmax_spawn = Node(
+        package='ros_gz_sim',
+        executable='create',
+        name='fwmax_spawn',
+        output='screen',
+        arguments=[
+            '-world', 'rough_terrain_world',
+            '-name', 'fwmax',
+            '-x', LaunchConfiguration('robot_x'),
+            '-y', LaunchConfiguration('robot_y'),
+            '-z', LaunchConfiguration('robot_z'),
+            '-Y', LaunchConfiguration('robot_yaw'),
+            '-topic', 'robot_description',
+        ],
+        condition=LaunchConfigurationEquals('robot', 'fwmax'),
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument(
             'robot', default_value='husky',
-            choices=['husky', 'jackal', 'none'],
-            description='Robot to spawn: Clearpath Husky A200, Jackal J100, or none.',
+            choices=['husky', 'jackal', 'fwmax', 'none'],
+            description=(
+                'Robot to spawn: Clearpath Husky A200, Jackal J100, '
+                'selectable-drive FW-max, or none.'
+            ),
+        ),
+        DeclareLaunchArgument(
+            'fwmax_drive_mode', default_value='skid',
+            choices=['skid', 'swerve'],
+            description=(
+                'FW-max drive model: legacy skid approximation or Gear 6 '
+                'dual-Ackermann four-wheel steering.'
+            ),
         ),
         DeclareLaunchArgument(
             'rviz', default_value='true',
@@ -93,7 +161,7 @@ def generate_launch_description():
         DeclareLaunchArgument('robot_x', default_value='-7.2', description='Robot spawn x position in metres.'),
         DeclareLaunchArgument('robot_y', default_value='-3.2', description='Robot spawn y position in metres.'),
         DeclareLaunchArgument(
-            'robot_z', default_value='4.2',
+            'robot_z', default_value='3.2',
             description='Robot spawn z position in metres.',
         ),
         DeclareLaunchArgument('robot_yaw', default_value='0.0', description='Robot spawn yaw in radians.'),
@@ -132,6 +200,143 @@ def generate_launch_description():
             arguments=['/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock'],
         ),
         Node(
+            package='robot_state_publisher',
+            executable='robot_state_publisher',
+            name='fwmax_robot_state_publisher',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'robot_description': fwmax_skid_robot_description,
+            }],
+            condition=fwmax_skid_condition,
+        ),
+        Node(
+            package='robot_state_publisher',
+            executable='robot_state_publisher',
+            name='fwmax_robot_state_publisher',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'robot_description': fwmax_swerve_robot_description,
+            }],
+            condition=fwmax_swerve_condition,
+        ),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='fwmax_sensor_gz_bridge',
+            namespace='sensors',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'config_file': fwmax_sensor_bridge_config,
+            }],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
+            package='ros_gz_image',
+            executable='image_bridge',
+            name='fwmax_realsense_color_bridge',
+            output='screen',
+            arguments=['/sensors/camera/image'],
+            remappings=[
+                (
+                    '/sensors/camera/image',
+                    '/sensors/camera/color/image',
+                ),
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
+            package='ros_gz_image',
+            executable='image_bridge',
+            name='fwmax_realsense_depth_bridge',
+            output='screen',
+            arguments=['/sensors/camera/depth_image'],
+            remappings=[
+                (
+                    '/sensors/camera/depth_image',
+                    '/sensors/camera/depth/image',
+                ),
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='fwmax_realsense_gz_static_tf',
+            output='screen',
+            arguments=[
+                '--frame-id', 'camera_link',
+                '--child-frame-id', 'fwmax/base_link/camera',
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='fwmax_joint_state_gz_bridge',
+            output='screen',
+            arguments=[
+                (
+                    '/world/rough_terrain_world/model/fwmax/joint_state'
+                    '@sensor_msgs/msg/JointState[ignition.msgs.Model'
+                ),
+            ],
+            remappings=[
+                (
+                    '/world/rough_terrain_world/model/fwmax/joint_state',
+                    '/joint_states',
+                ),
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='fwmax_skid_gz_bridge',
+            output='screen',
+            arguments=[
+                '/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist',
+                '/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry',
+                '/tf@tf2_msgs/msg/TFMessage[ignition.msgs.Pose_V',
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=fwmax_skid_condition,
+        ),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='fwmax_ground_truth_gz_bridge',
+            output='screen',
+            arguments=[
+                (
+                    '/ground_truth/odom@nav_msgs/msg/Odometry'
+                    '[ignition.msgs.Odometry'
+                ),
+            ],
+            parameters=[{'use_sim_time': True}],
+            condition=fwmax_swerve_condition,
+        ),
+        Node(
+            package='fwmax_dual_ackermann_controller',
+            executable='fwmax_planar_odometry',
+            name='fwmax_planar_odometry',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'input_topic': '/ground_truth/odom',
+                'output_topic': '/odom',
+                'odom_frame': 'odom',
+                'base_frame': 'base_footprint',
+            }],
+            condition=fwmax_swerve_condition,
+        ),
+        Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',
             name='ouster_128_gz_bridge',
@@ -163,6 +368,58 @@ def generate_launch_description():
             name='camera_pointcloud_frame_fix',
             output='screen',
             parameters=[{'use_sim_time': True}],
+            condition=LaunchConfigurationEquals('robot', 'husky'),
+        ),
+        Node(
+            package='rough_terrain_sim',
+            executable='camera_pointcloud_frame_fix',
+            name='fwmax_camera_pointcloud_frame_fix',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'input_topic': '/sensors/camera/points',
+                'output_topic': '/sensors/camera/points_aligned',
+                'input_frame': 'camera_color_optical_frame',
+                'output_frame': 'camera_link',
+            }],
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        TimerAction(
+            period=4.0,
+            actions=[
+                Node(
+                    package='controller_manager',
+                    executable='spawner',
+                    name='fwmax_steering_controller_spawner',
+                    output='screen',
+                    arguments=[
+                        'fwmax_steering_controller',
+                        '--controller-manager', '/controller_manager',
+                        '--controller-manager-timeout', '60',
+                    ],
+                    condition=fwmax_swerve_condition,
+                ),
+                Node(
+                    package='controller_manager',
+                    executable='spawner',
+                    name='fwmax_wheel_controller_spawner',
+                    output='screen',
+                    arguments=[
+                        'fwmax_wheel_controller',
+                        '--controller-manager', '/controller_manager',
+                        '--controller-manager-timeout', '60',
+                    ],
+                    condition=fwmax_swerve_condition,
+                ),
+                Node(
+                    package='fwmax_dual_ackermann_controller',
+                    executable='dual_ackermann_controller',
+                    name='fwmax_dual_ackermann_controller',
+                    output='screen',
+                    parameters=[{'use_sim_time': True}],
+                    condition=fwmax_swerve_condition,
+                ),
+            ],
         ),
         Node(
             package='rviz2',
@@ -175,6 +432,6 @@ def generate_launch_description():
         ),
         TimerAction(
             period=3.0,
-            actions=[husky_spawn, jackal_spawn],
+            actions=[husky_spawn, jackal_spawn, fwmax_spawn],
         ),
     ])

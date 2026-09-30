@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<sdf version="1.8">
+  <model name="namaqualand_boulder_02">
+    <static>true</static>
+    <link name="boulder_link">
+      <collision name="boulder_collision">
+        <pose>0.08 -0.01 0.28 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>2.20 1.00 0.68</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="boulder_visual">
+        <cast_shadows>true</cast_shadows>
+        <geometry>
+          <mesh>
+            <uri>model://namaqualand_boulder_02/meshes/namaqualand_boulder_02.obj</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>
