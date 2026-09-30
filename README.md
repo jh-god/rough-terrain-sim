@@ -10,8 +10,6 @@ skid-steer 근사 모델과 Gear 6 dual-Ackermann 4륜 조향 모델을 선택�
 | :---: | :---: | :---: |
 | [<img src="sample/husky.png" alt="울퉁불퉁한 지형 위의 Husky A200 Gazebo 화면" width="300">](sample/husky.png) | [<img src="sample/jackal.png" alt="울퉁불퉁한 지형 위의 Jackal J100 Gazebo 화면" width="300">](sample/jackal.png) | [<img src="sample/fwmax.png" alt="울퉁불퉁한 지형 위의 FW-max Pro Gazebo 화면" width="300">](sample/fwmax.png) |
 
-같은 지형 환경에서 실행한 로봇별 Gazebo 화면입니다. 이미지를 클릭하면
-원본 크기로 확인할 수 있습니다.
 
 ## 요구 사항
 
@@ -140,7 +138,7 @@ Gazebo가 열리면 카메라는 지형의 기본 스폰 구역 부근을 바라
 
 ```bash
 ros2 launch rough_terrain_sim rough_terrain.launch.py \
-  robot:=jackal robot_x:=-6.0 robot_y:=-4.0 robot_z:=4.2 robot_yaw:=1.57
+  robot:=jackal robot_x:=-6.0 robot_y:=-4.0 robot_z:=2.3 robot_yaw:=1.57
 ```
 
 새 heightmap을 생성한 경우 해당 위치의 지형 높이에 맞춰 `robot_z`를
@@ -415,6 +413,14 @@ sudo sed -i \
 ```
 
 
+## 통신 문제 해결
+
+센서 데이터가 끊기거나 지연되는 경우
+[ROS 2 센서 통신 문제 해결](docs/communication_troubleshooting.md)을 참고하세요.
+ROS 도메인 분리, `/clock` 확인, Linux/CycloneDDS 수신 버퍼 설정과 센서
+수신 주기·지연 측정 방법을 안내합니다. 문서의 설정값은 특정 환경에서 검증한
+예시이며, 패키지 실행을 위한 필수 설정은 아닙니다.
+
 ## 패키지 구조
 
 ```text
@@ -431,6 +437,7 @@ gazebo_ws/src/
 │       └── test_planar_odometry.py
 └── rough-terrain-sim/
     ├── README.md
+    ├── docs/communication_troubleshooting.md
     ├── launch/rough_terrain.launch.py
     ├── worlds/rough_terrain.sdf
     ├── models/rough_terrain/
