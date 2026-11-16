@@ -3,8 +3,8 @@
   <!--
     Gazebo approximation of the FW-max Pro chassis. drive_mode selects either
     the legacy four-wheel skid-steer approximation or Gear 6 dual-Ackermann
-    steering. The detailed DAE remains the visual model; simple primitives are
-    used for collision and wheel contact.
+    steering. Separate body and wheel DAEs provide the moving visuals; simple
+    primitives are used for collision and wheel contact.
   -->
 
   <xacro:arg name="namespace" default=""/>
@@ -23,12 +23,13 @@
 
   <xacro:property name="wheel_radius" value="0.125"/>
   <xacro:property name="wheel_width" value="0.080"/>
-  <xacro:property name="wheel_visual_radius" value="0.128"/>
-  <xacro:property name="wheel_visual_width" value="0.105"/>
   <xacro:property name="wheelbase" value="0.600"/>
   <xacro:property name="wheel_track" value="0.450"/>
-  <xacro:property name="base_height" value="0.388"/>
-  <xacro:property name="wheel_center_z" value="${wheel_radius - base_height}"/>
+  <!-- Wheel centres from the supplied fwmax_pro_description URDF. -->
+  <xacro:property name="wheel_center_x" value="-0.000360"/>
+  <xacro:property name="wheel_center_z" value="-0.257"/>
+  <!-- Keep the collision tyres on base_footprint z=0 at zero travel. -->
+  <xacro:property name="base_height" value="${wheel_radius - wheel_center_z}"/>
 
   <!--
     At zero suspension travel, the nominal ground plane is base_footprint z=0.
@@ -44,6 +45,9 @@
   <xacro:property
     name="base_mass"
     value="${total_mass - 4.0 * (suspension_mass + steering_mass + wheel_mass)}"/>
+  <xacro:property
+    name="base_com_x"
+    value="${-4.0 * (suspension_mass + steering_mass + wheel_mass) * wheel_center_x / base_mass}"/>
   <xacro:property
     name="base_com_z"
     value="${(total_mass * (target_com_height - base_height) - 4.0 * (suspension_mass + steering_mass + wheel_mass) * wheel_center_z) / base_mass}"/>
@@ -68,15 +72,11 @@
     Total mass is 195.84 kg: 171.84 kg for the chassis, plus a 0.5 kg
     suspension carrier, 0.5 kg steering carrier, and 5 kg wheel at each corner.
     At the designed loaded equilibrium position, the assembled COM is at x=0,
-    y=0, z=-0.133 m in base_link.
+    y=0, z=-0.127 m in base_link.
   -->
 
   <material name="fwmax_body_dark_silver">
     <color rgba="0.32 0.34 0.37 1.0"/>
-  </material>
-
-  <material name="fwmax_wheel_black">
-    <color rgba="0.02 0.02 0.025 1.0"/>
   </material>
 
   <!-- Keep the inertial base_link below a massless KDL-compatible root. -->
@@ -84,7 +84,7 @@
 
   <link name="base_link">
     <inertial>
-      <origin xyz="0 0 ${base_com_z}" rpy="0 0 0"/>
+      <origin xyz="${base_com_x} 0 ${base_com_z}" rpy="0 0 0"/>
       <mass value="${base_mass}"/>
       <!-- Box approximation based on the 0.96 x 0.55 x 0.395 m envelope. -->
       <inertia
@@ -99,7 +99,7 @@
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
         <mesh
-          filename="file://$(find rough_terrain_sim)/meshes/fwmax/isrl_fwmax_pro.dae"
+          filename="file://$(find rough_terrain_sim)/meshes/fwmax/isrl_fwmax_pro_body_without_wheels_motors.dae"
           scale="1 1 1"/>
       </geometry>
       <material name="fwmax_body_dark_silver"/>
@@ -242,17 +242,17 @@
           iyy="0.007812500" iyz="0.0" izz="0.004439583"/>
       </inertial>
 
-      <!--
-        This primitive slightly oversizes the wheels already present in the
-        full-body DAE so the moving black wheel masks the fixed mesh wheel.
-      -->
+      <!-- The shared mesh has its motor facing +Y. Rotate only the left
+           visual so each motor faces inward; all joint axes stay +Y.
+           The supplied mesh combines motor and tyre, so both rotate.
+           Keep its embedded rubber / metal materials without a colour override. -->
       <visual name="wheel_visual">
-        <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+        <origin xyz="0 0 0" rpy="0 0 ${pi if y > 0 else 0}"/>
         <geometry>
-          <cylinder
-            radius="${wheel_visual_radius}" length="${wheel_visual_width}"/>
+          <mesh
+            filename="file://$(find rough_terrain_sim)/meshes/fwmax/isrl_fwmax_pro_wheel_motor_tire.dae"
+            scale="1 1 1"/>
         </geometry>
-        <material name="fwmax_wheel_black"/>
       </visual>
 
       <collision name="wheel_collision">
@@ -275,13 +275,13 @@
   </xacro:macro>
 
   <xacro:fwmax_wheel
-    prefix="front_left" x="${wheelbase / 2.0}" y="${wheel_track / 2.0}"/>
+    prefix="front_left" x="${wheel_center_x + wheelbase / 2.0}" y="${wheel_track / 2.0}"/>
   <xacro:fwmax_wheel
-    prefix="rear_left" x="${-wheelbase / 2.0}" y="${wheel_track / 2.0}"/>
+    prefix="rear_left" x="${wheel_center_x - wheelbase / 2.0}" y="${wheel_track / 2.0}"/>
   <xacro:fwmax_wheel
-    prefix="front_right" x="${wheelbase / 2.0}" y="${-wheel_track / 2.0}"/>
+    prefix="front_right" x="${wheel_center_x + wheelbase / 2.0}" y="${-wheel_track / 2.0}"/>
   <xacro:fwmax_wheel
-    prefix="rear_right" x="${-wheelbase / 2.0}" y="${-wheel_track / 2.0}"/>
+    prefix="rear_right" x="${wheel_center_x - wheelbase / 2.0}" y="${-wheel_track / 2.0}"/>
 
   <xacro:if value="${drive_mode == 'swerve'}">
     <ros2_control name="fwmax_swerve_system" type="system">

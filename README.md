@@ -166,14 +166,15 @@ FW-max의 실제 구동계는 4륜 독립 구동·독립 조향 swerve 방식이
 
 - 전체 질량: 195.84 kg
 - 전체 질량중심: suspension 설계 정적 평형 자세에서 로봇 수평 중심,
-  지상 0.255 m (`base_link` 기준 `z=-0.133 m`)
+  지상 0.255 m (`base_link` 기준 `z=-0.127 m`)
 - 휠베이스: 0.60 m
 - 윤거: 0.45 m
 - 바퀴 반경: 0.125 m
 - passive suspension: 바퀴별 수직 prismatic spring-damper
 - suspension 이동 범위: 70 mm (`-0.03 ~ +0.04 m`)
 - suspension 강성/감쇠: 바퀴당 20,000 N/m, 925 N·s/m
-- 외형: `meshes/fwmax/isrl_fwmax_pro.dae`
+- 차체 외형: `meshes/fwmax/isrl_fwmax_pro_body_without_wheels_motors.dae`
+- 바퀴 외형: `meshes/fwmax/isrl_fwmax_pro_wheel_motor_tire.dae` (네 바퀴 공용)
 - 물리 충돌: 단순화한 차체 box와 네 개의 cylinder 바퀴
 
 각 바퀴의 suspension carrier는 차체와 수직 prismatic joint로 연결됩니다.
@@ -239,9 +240,19 @@ ros2 launch rough_terrain_sim rough_terrain.launch.py \
 `odom → base_footprint` TF로 발행합니다. Navigation에 사용하는 이
 odometry에는 x, y, yaw만 포함되며 z, roll, pitch는 0입니다.
 
-원본 DAE에는 차체와 함께 고정된 바퀴 형상이 포함되어 있습니다. 실제로
-상하 이동·조향하고 지면과 접촉하는 검은 cylinder 바퀴와 DAE 바퀴가
-겹쳐 보일 수 있지만 물리 동작에는 영향이 없습니다.
+`fwmax_pro_description.zip`의 분리 메시를 사용합니다. 차체 메시에는 바퀴와
+모터가 없으며, 각 바퀴 메시는 해당 wheel link에 연결되어 suspension 이동,
+조향, 구동 회전을 따라갑니다. 왼쪽 바퀴는 visual만 Z축으로 π 회전해 모터가
+안쪽을 향하도록 했고, 네 구동 조인트의 회전축은 모두 +Y로 유지합니다.
+바퀴와 모터가 하나의 메시이므로 모터 외형도 바퀴와 함께 회전합니다.
+공용 바퀴 DAE에는 타이어의 무광 짙은 회색과 휠·모터의 금속 회색 재질을
+적용했습니다. 메시 중심에서 반경 0.095 m 이상인 면을 타이어로 구분합니다.
+
+조인트 중심은 ZIP의 URDF와 동일하게 앞쪽 `x=0.299640`, 뒤쪽
+`x=-0.300360`, 좌우 `y=±0.225`, 높이 `z=-0.257 m`입니다.
+기존 접촉 반경 0.125 m를 유지하므로 `base_footprint → base_link` 높이는
+0.382 m입니다. 질량중심은 계속 지상 0.255 m와 수평 원점에 오도록 차체
+관성 원점을 보정했습니다. 충돌 계산은 기존 box/cylinder 형상을 사용합니다.
 
 ## FW-max 센서와 TF
 
@@ -448,7 +459,9 @@ gazebo_ws/src/
     │   ├── fwmax/sensors_bridge.yaml
     │   ├── husky/
     │   └── jackal/
-    ├── meshes/fwmax/isrl_fwmax_pro.dae
+    ├── meshes/fwmax/
+    │   ├── isrl_fwmax_pro_body_without_wheels_motors.dae
+    │   └── isrl_fwmax_pro_wheel_motor_tire.dae
     ├── urdf/
     │   ├── fwmax_skid_steer.urdf.xacro
     │   └── husky_ouster_os1_128.urdf.xacro
