@@ -224,6 +224,15 @@ def generate_launch_description():
         Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',
+            name='fwmax_imu_bridge',
+            parameters=[{'use_sim_time': True, 'config_file': os.path.join(
+                package_share, 'config', 'fwmax', 'imu_bridge.yaml')}],
+            output='screen',
+            condition=LaunchConfigurationEquals('robot', 'fwmax'),
+        ),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
             name='fwmax_sensor_gz_bridge',
             namespace='sensors',
             output='screen',

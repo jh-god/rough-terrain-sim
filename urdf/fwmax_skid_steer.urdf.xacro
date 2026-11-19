@@ -126,6 +126,88 @@
     <origin xyz="0 0 ${base_height}" rpy="0 0 0"/>
   </joint>
 
+  <!-- Generic IMU at the base_link origin, axes aligned with the chassis.
+       Noise values are per-sample standard deviations, not noise densities.
+       Bias is sampled at startup; these are experiment defaults, not a product model.
+       Gazebo orientation is a simulated reference, not an estimated AHRS output. -->
+  <xacro:property name="imu_gyro_stddev" value="0.002"/>
+  <xacro:property name="imu_gyro_bias_stddev" value="0.0002"/>
+  <xacro:property name="imu_accel_stddev" value="0.02"/>
+  <xacro:property name="imu_accel_bias_stddev" value="0.002"/>
+  <link name="imu_link">
+    <inertial>
+      <mass value="0.001"/>
+      <inertia ixx="1e-9" ixy="0" ixz="0" iyy="1e-9" iyz="0" izz="1e-9"/>
+    </inertial>
+  </link>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <gazebo reference="imu_link">
+    <sensor name="imu" type="imu">
+      <always_on>true</always_on>
+      <update_rate>200</update_rate>
+      <ignition_frame_id>imu_link</ignition_frame_id>
+      <topic>/sensors/imu/data</topic>
+      <imu>
+        <angular_velocity>
+          <x>
+            <noise type="gaussian">
+              <mean>0</mean>
+              <stddev>${imu_gyro_stddev}</stddev>
+              <bias_mean>0</bias_mean>
+              <bias_stddev>${imu_gyro_bias_stddev}</bias_stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="gaussian">
+              <mean>0</mean>
+              <stddev>${imu_gyro_stddev}</stddev>
+              <bias_mean>0</bias_mean>
+              <bias_stddev>${imu_gyro_bias_stddev}</bias_stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="gaussian">
+              <mean>0</mean>
+              <stddev>${imu_gyro_stddev}</stddev>
+              <bias_mean>0</bias_mean>
+              <bias_stddev>${imu_gyro_bias_stddev}</bias_stddev>
+            </noise>
+          </z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x>
+            <noise type="gaussian">
+              <mean>0</mean>
+              <stddev>${imu_accel_stddev}</stddev>
+              <bias_mean>0</bias_mean>
+              <bias_stddev>${imu_accel_bias_stddev}</bias_stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="gaussian">
+              <mean>0</mean>
+              <stddev>${imu_accel_stddev}</stddev>
+              <bias_mean>0</bias_mean>
+              <bias_stddev>${imu_accel_bias_stddev}</bias_stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="gaussian">
+              <mean>0</mean>
+              <stddev>${imu_accel_stddev}</stddev>
+              <bias_mean>0</bias_mean>
+              <bias_stddev>${imu_accel_bias_stddev}</bias_stddev>
+            </noise>
+          </z>
+        </linear_acceleration>
+      </imu>
+    </sensor>
+  </gazebo>
+
   <!--
     Ouster OS1-64. The imported model places its measurement frame 0.060695 m
     above the mounting origin (base height 0.0225 m + sensor offset 0.038195 m).

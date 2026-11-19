@@ -1,0 +1,7 @@
+- ros_topic_name: /sensors/imu/data
+  gz_topic_name: /sensors/imu/data
+  ros_type_name: sensor_msgs/msg/Imu
+  gz_type_name: ignition.msgs.IMU
+  direction: GZ_TO_ROS
+  subscriber_queue: 10
+  publisher_queue: 10

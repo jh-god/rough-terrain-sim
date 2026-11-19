@@ -256,12 +256,13 @@ odometry에는 x, y, yaw만 포함되며 z, roll, pitch는 0입니다.
 
 ## FW-max 센서와 TF
 
-FW-max 모델에는 Ouster 64채널 LiDAR와 Intel RealSense D435가 포함되어
-있으며, 두 센서는 skid와 swerve 모드에서 동일하게 동작합니다.
+FW-max 모델에는 Ouster 64채널 LiDAR, Intel RealSense D435, 200 Hz 가상 IMU가 포함되어
+있으며, 센서는 skid와 swerve 모드에서 동일하게 동작합니다.
 
 | TF | xyz [m] | rpy [rad] | 비고 |
 | --- | --- | --- | --- |
 | `base_link → os_sensor` | `0.32 0.0 0.505` | `0.0 0.0 0.0` | Ouster, 수직 64채널 |
+| `base_link → imu_link` | `0 0 0` | `0 0 0` | 200 Hz 가상 IMU |
 | `base_link → camera_link` | `0.41 0.01 0.335` | `0.0 0.7854 0.0` | RealSense D435 |
 
 Ouster는 `clearpath_sensors_description`의 OS1 macro를 사용하며
@@ -273,6 +274,7 @@ ROS 2에서 사용하는 주요 센서 토픽은 다음과 같습니다.
 
 | 센서 데이터 | ROS 2 토픽 |
 | --- | --- |
+| IMU (`sensor_msgs/msg/Imu`) | `/sensors/imu/data` |
 | Ouster LaserScan | `/sensors/os1_64/scan` |
 | Ouster PointCloud2 | `/sensors/os1_64/points` |
 | RGB 영상 | `/sensors/camera/color/image` |
@@ -286,6 +288,25 @@ Gazebo Fortress RGB-D point cloud의 frame 표기가 실제 point 배열 방향�
 맞지 않는 경우를 보정하기 위해 `camera_pointcloud_frame_fix` 노드가 원본
 cloud를 `camera_link` frame의 `/sensors/camera/points_aligned`로 다시
 발행합니다.
+
+### 가상 IMU
+
+`base_link` 원점에 `imu_link`를 고정하고 축을 일치시킵니다(X 전방, Y 좌측, Z 상방).
+`rough_terrain.launch.py robot:=fwmax`만 실행해도 `/sensors/imu/data`가 출력됩니다.
+Navigation 통합 런치도 동일한 `config/fwmax/imu_bridge.yaml`을 재사용합니다.
+200 Hz는 시뮬레이션 시간 기준이며, 실제 시간 수신율은 시뮬레이션 속도에 따라 달라집니다.
+
+| 설정 (각 축 공통) | 각속도 [rad/s] | 가속도 [m/s²] |
+| --- | --- | --- |
+| 가우시안 측정 노이즈 표준편차 | 0.002 | 0.02 |
+| 초기 고정 바이어스 표준편차 | 0.0002 | 0.002 |
+
+평균은 모두 0이며 값은 샘플당 표준편차로, noise density가 아닙니다.
+초기 바이어스는 센서 초기화 때 샘플링되므로 실행마다 달라집니다. 시간에 따른 바이어스
+드리프트는 별도로 추가하지 않았습니다. 특정 제품 사양이 아닌 초기 실험용 설정입니다.
+튜닝은 `urdf/fwmax_skid_steer.urdf.xacro`의 `imu_gyro_*`, `imu_accel_*` 속성에서 합니다.
+자세 quaternion은 Gazebo의 시뮬레이션 자세이며, 노이즈를 포함한 AHRS 추정 결과가 아닙니다.
+IMU 추가는 GT 기반 navigation localization을 변경하지 않습니다.
 
 ### 센서 시각화
 
